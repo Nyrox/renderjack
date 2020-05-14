@@ -1,16 +1,78 @@
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
+pub mod shader;
 pub mod transform;
 
 use camera::Camera;
 use cgmath::prelude::*;
-use cgmath::{Deg, PerspectiveFov, Rad, Vector2, Vector3, Vector4};
+use cgmath::{Deg, PerspectiveFov, Rad, Vector2, Vector3, Vector4, Matrix4};
 use transform::Transform;
 
 use std::path::PathBuf;
 
 use std::time::*;
+use shader::Uniform;
+use gl::types::*;
+use std::ffi::CString;
+
+
+impl Uniform for Matrix4<f32> {
+    fn set(&self, id: &str, handle: GLuint) {
+        unsafe {
+            let name = CString::new(id.as_bytes()).unwrap();
+            let location = gl::GetUniformLocation(handle, name.as_ptr());
+            gl::ProgramUniformMatrix4fv(
+                handle,
+                location,
+                1,
+                gl::FALSE,
+                ::std::mem::transmute(self),
+            );
+        }
+    }
+}
+
+impl Uniform for Vector3<f32> {
+    fn set(&self, id: &str, handle: GLuint) {
+        unsafe {
+            let name = CString::new(id.as_bytes()).unwrap();
+            let location = gl::GetUniformLocation(handle, name.as_ptr());
+            gl::ProgramUniform3fv(handle, location, 1, ::std::mem::transmute(self));
+        }
+    }
+}
+
+impl Uniform for Vector2<i32> {
+    fn set(&self, id: &str, handle: GLuint) {
+        unsafe {
+            let name = CString::new(id.as_bytes()).unwrap();
+            let location = gl::GetUniformLocation(handle, name.as_ptr());
+            gl::ProgramUniform2iv(handle, location, 1, ::std::mem::transmute(self));
+        }
+    }
+}
+
+impl Uniform for i32 {
+    fn set(&self, id: &str, handle: GLuint) {
+        unsafe {
+            let name = CString::new(id.as_bytes()).unwrap();
+            let location = gl::GetUniformLocation(handle, name.as_ptr());
+            gl::ProgramUniform1i(handle, location, *self);
+        }
+    }
+}
+
+impl Uniform for f32 {
+    fn set(&self, id: &str, handle: GLuint) {
+        unsafe {
+            let name = CString::new(id.as_bytes()).unwrap();
+            let location = gl::GetUniformLocation(handle, name.as_ptr());
+            gl::ProgramUniform1f(handle, location, *self);
+        }
+    }
+}
+
 
 fn edge(p: Vector2<f32>, v0: Vector2<f32>, v1: Vector2<f32>) -> f32 {
     (p.x - v0.x) * (v1.y - v0.y) - (p.y - v0.y) * (v1.x - v0.x)
@@ -84,7 +146,7 @@ where
 
     for x in rast_min_x..rast_max_x {
         for y in rast_min_y..rast_max_y {
-            let p = Vector2::new(x as f32, y as f32);
+            let p = Vector2::new(x as f32 + 0.5, y as f32 + 0.5);
 
             let v0 = tri.0.truncate();
             let v1 = tri.1.truncate();
@@ -96,27 +158,33 @@ where
             let w1 = edge(p, v2, v0);
             let w2 = edge(p, v0, v1);
 
-            if (w0 >= 0.0) && (w1 >= 0.0) && (w2 >= 0.0) {
+            if (w0 <= 0.0) && (w1 <= 0.0) && (w2 <= 0.0) {
                 cb((x, y), (w0 / area, w1 / area, w2 / area))
             }
         }
     }
 }
 
-fn main() {
-    // 1. The **winit::EventsLoop** for handling events.
-    let mut events_loop = glium::glutin::event_loop::EventLoop::new();
-    // 2. Parameters for building the Window.
-    let wb = glium::glutin::window::WindowBuilder::new()
-        .with_inner_size(glium::glutin::dpi::LogicalSize::new(1024.0, 768.0))
-        .with_title("Hello world");
-    // 3. Parameters for building the OpenGL context.
-    let cb = glium::glutin::ContextBuilder::new();
-    // 4. Build the Display with the given window and OpenGL context parameters and register the
-    //    window with the events_loop.
-    let display = glium::Display::new(wb, cb, &events_loop).unwrap();
+use gl::types::*;
 
+fn main() {
     let im_dims = (800, 600);
+
+    let mut events_loop = glutin::event_loop::EventLoop::new();
+
+    let wb = glutin::window::WindowBuilder::new()
+        .with_inner_size(glutin::dpi::LogicalSize::new(
+            im_dims.0 as f32,
+            im_dims.1 as f32,
+        ))
+        .with_title("Hello world");
+
+    let context = glutin::ContextBuilder::new()
+        .build_windowed(wb, &events_loop)
+        .unwrap();
+    let context = unsafe { context.make_current().unwrap() };
+
+    gl::load_with(|s| context.get_proc_address(s));
 
     let mut imgbuf = image::ImageBuffer::new(im_dims.0, im_dims.1);
 
@@ -134,9 +202,93 @@ fn main() {
     let view = camera.get_view_matrix();
     let proj = camera.get_projection_matrix();
 
-    let mesh = mesh::load_ply(PathBuf::from("monkey.ply"));
+    let mesh = mesh::load_ply(PathBuf::from("res/mesh/monkey.ply"));
 
     let mut depth = vec![1.0; im_dims.0 as usize * im_dims.1 as usize];
+
+    struct Viewport {
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+    }
+
+    let mut vao = 0;
+    let mut vbo = 0;
+
+    unsafe {
+        gl::CreateVertexArrays(1, &mut vao);
+        gl::CreateBuffers(1, &mut vbo);
+        gl::BindVertexArray(vao);
+
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::NamedBufferData(
+            vbo,
+            (std::mem::size_of::<mesh::Triangle>() * mesh.triangles.len()) as isize,
+            mesh.triangles.as_ptr() as *const GLvoid,
+            gl::STATIC_DRAW,
+        );
+
+        gl::VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            0,
+            std::mem::size_of::<mesh::Vertex>() as i32,
+            std::ptr::null(),
+        );
+        gl::EnableVertexAttribArray(0);
+
+        macro_rules! offset_of {
+            ($ty:ty, $field:ident) => {
+                unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
+            };
+        }
+
+        gl::VertexAttribPointer(
+            1,
+            3,
+            gl::FLOAT,
+            0,
+            std::mem::size_of::<mesh::Vertex>() as i32,
+            offset_of!(mesh::Vertex, normal) as *const GLvoid,
+        );
+        gl::EnableVertexAttribArray(1);
+
+        gl::BindVertexArray(0);
+    }
+
+    use std::io::Read;
+    pub fn read_file_contents(filename: &str) -> String {
+        let mut f = std::fs::File::open(filename).unwrap();
+        let mut buffer = String::new();
+        f.read_to_string(&mut buffer).unwrap();
+        buffer
+    }
+
+    let shader = shader::Shader::new();
+    shader
+        .attach(
+            &read_file_contents("res/shaders/basic.vs"),
+            gl::VERTEX_SHADER,
+        )
+        .unwrap();
+    shader
+        .attach(
+            &read_file_contents("res/shaders/basic.fs"),
+            gl::FRAGMENT_SHADER,
+        )
+        .unwrap();
+    shader.compile().unwrap();
+    shader.bind();
+
+
+    let viewport = Viewport {
+        x: 0,
+        y: 0,
+        width: im_dims.0,
+        height: im_dims.1,
+    };
 
     // clear
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
@@ -146,34 +298,22 @@ fn main() {
     }
 
     let begin = std::time::Instant::now();
-    for tri in mesh.triangles {
+    for tri in mesh.triangles.iter() {
         let mut t1_ndc = [
             (proj * view * tri.0.position.extend(1.0)),
             (proj * view * tri.1.position.extend(1.0)),
             (proj * view * tri.2.position.extend(1.0)),
         ];
 
+        
         for p in t1_ndc.iter_mut() {
             p.x = p.x / p.w;
             p.y = p.y / p.w;
             p.z = p.z / p.w;
         }
+        println!("{:?}", t1_ndc);
 
         let t1_ndc: Vec<_> = t1_ndc.iter().map(|v| Vector4::truncate(*v)).collect();
-
-        struct Viewport {
-            x: i32,
-            y: i32,
-            width: u32,
-            height: u32,
-        }
-
-        let view = Viewport {
-            x: 0,
-            y: 0,
-            width: im_dims.0,
-            height: im_dims.1,
-        };
 
         let near_val = 0.0;
         let far_val = 1.0;
@@ -181,9 +321,13 @@ fn main() {
         let ndc_to_wnd = |p: Vector3<f32>| {
             let (x_ndc, y_ndc, z_ndc) = p.into();
             Vector3::new(
-                (view.width / 2) as f32 * x_ndc + view.x as f32 + (view.width / 2) as f32,
-                (view.height / 2) as f32 * y_ndc + view.y as f32 + (view.height / 2) as f32,
-                ((far_val - near_val) / 2.0) * z_ndc + ((far_val + near_val) / 2.0),
+                (viewport.width / 2) as f32 * x_ndc
+                    + viewport.x as f32
+                    + (viewport.width / 2) as f32,
+                (viewport.height / 2) as f32 * y_ndc
+                    + viewport.y as f32
+                    + (viewport.height / 2) as f32,
+                ((far_val - near_val) / 2.0) *  z_ndc + ((far_val + near_val) / 2.0),
             )
         };
 
@@ -198,16 +342,30 @@ fn main() {
         rasterize_window_space(t1_wnd, |(x, y), (w0, w1, w2)| {
             let i = im_dims.0 * y + x;
 
-            let d = t1_wnd.0.z * w0 + t1_wnd.1.z * w1 + t1_wnd.2.z * w2;
+            let interpolate_inverse = |(a, b, c), (w0, w1, w2)| {
+                let i = 
+                    (1.0 / a) * (w0) +
+                    (1.0 / b) * (w1) +
+                    (1.0 / c) * (w2);
 
-            let n = tri.0.normal * w0 + tri.1.normal * w1 + tri.2.normal * w2;
+                1.0 / i;
+            };
+
+            let d = interpolate_inverse((t1_wnd.0.z, t1_wnd.1.z, t1_wnd.2.z), (w0, w1, w2));
+
+            let n = 
+                (tri.0.normal / t1_wnd.0.z) * w0 * d +
+                (tri.1.normal / t1_wnd.1.z) * w1 * d +
+                (tri.2.normal / t1_wnd.2.z) * w2 * d;
+
 
             if d < depth[i as usize] {
-                let cosa = n.dot(Vector3::new(-0.5, 1.0, 1.0)).max(0.0);
+                let cosa = n.dot(Vector3::new(-0.5, 1.0, -1.0)).max(0.0);
                 let color = Vector3::new(1.0, 0.5, 0.5);
                 let out = color * cosa;
 
-                *(imgbuf.get_pixel_mut(x, y)) = image::Rgb([
+
+                *(imgbuf.get_pixel_mut(x, im_dims.1 - (y + 1))) = image::Rgb([
                     (out.x * 255.0) as u8,
                     (out.y * 255.0) as u8,
                     (out.z * 255.0) as u8,
@@ -218,6 +376,44 @@ fn main() {
     }
 
     println!("{:?}", Instant::now().duration_since(begin));
-
     imgbuf.save("output.png").unwrap();
+
+    use glutin::event::{Event, WindowEvent};
+    use glutin::event_loop::{ControlFlow, EventLoop};
+    events_loop.run(move |event, _, control_flow| match event {
+        Event::LoopDestroyed => return,
+        Event::WindowEvent { event, .. } => match event {
+            WindowEvent::Resized(physical_size) => context.resize(physical_size),
+            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+            _ => (),
+        },
+        Event::RedrawRequested(_) => {
+            unsafe {
+                gl::ClearColor(0.3, 0.0, 0.3, 1.0);
+                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            }
+
+            shader.bind();
+            shader.setUniform("view", camera.get_view_matrix());
+            shader.setUniform("proj", camera.get_projection_matrix());
+
+            unsafe {
+                gl::Enable(gl::DEPTH_TEST);
+                gl::DepthFunc(gl::LESS);
+            
+                gl::BindVertexArray(vao);
+                gl::DrawArrays(
+                    gl::TRIANGLES,
+                    0,
+                    (mesh.triangles.len() * 3) as i32,
+                );
+            }
+            
+
+            context.swap_buffers().unwrap();
+            context.window().request_redraw();
+        }
+        _ => (),
+    });
+
 }
