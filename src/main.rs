@@ -1,21 +1,21 @@
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
+pub mod shadelang;
 pub mod shader;
 pub mod transform;
 
 use camera::Camera;
 use cgmath::prelude::*;
-use cgmath::{Deg, PerspectiveFov, Rad, Vector2, Vector3, Vector4, Matrix4};
+use cgmath::{Deg, Matrix4, PerspectiveFov, Rad, Vector2, Vector3, Vector4};
 use transform::Transform;
 
 use std::path::PathBuf;
 
-use std::time::*;
-use shader::Uniform;
 use gl::types::*;
+use shader::Uniform;
 use std::ffi::CString;
-
+use std::time::*;
 
 impl Uniform for Matrix4<f32> {
     fn set(&self, id: &str, handle: GLuint) {
@@ -72,7 +72,6 @@ impl Uniform for f32 {
         }
     }
 }
-
 
 fn edge(p: Vector2<f32>, v0: Vector2<f32>, v1: Vector2<f32>) -> f32 {
     (p.x - v0.x) * (v1.y - v0.y) - (p.y - v0.y) * (v1.x - v0.x)
@@ -166,8 +165,14 @@ where
 }
 
 use gl::types::*;
+use crate::shadelang::ast::*;
+
 
 fn main() {
+    test_compiler_basic();
+    return;
+
+
     let im_dims = (800, 600);
 
     let mut events_loop = glutin::event_loop::EventLoop::new();
@@ -282,7 +287,6 @@ fn main() {
     shader.compile().unwrap();
     shader.bind();
 
-
     let viewport = Viewport {
         x: 0,
         y: 0,
@@ -305,7 +309,6 @@ fn main() {
             (proj * view * tri.2.position.extend(1.0)),
         ];
 
-        
         for p in t1_ndc.iter_mut() {
             p.x = p.x / p.w;
             p.y = p.y / p.w;
@@ -327,7 +330,7 @@ fn main() {
                 (viewport.height / 2) as f32 * y_ndc
                     + viewport.y as f32
                     + (viewport.height / 2) as f32,
-                ((far_val - near_val) / 2.0) *  z_ndc + ((far_val + near_val) / 2.0),
+                ((far_val - near_val) / 2.0) * z_ndc + ((far_val + near_val) / 2.0),
             )
         };
 
@@ -343,27 +346,21 @@ fn main() {
             let i = im_dims.0 * y + x;
 
             let interpolate_inverse = |(a, b, c), (w0, w1, w2)| {
-                let i = 
-                    (1.0 / a) * (w0) +
-                    (1.0 / b) * (w1) +
-                    (1.0 / c) * (w2);
+                let i = (1.0 / a) * (w0) + (1.0 / b) * (w1) + (1.0 / c) * (w2);
 
-                1.0 / i;
+                1.0 / i
             };
 
             let d = interpolate_inverse((t1_wnd.0.z, t1_wnd.1.z, t1_wnd.2.z), (w0, w1, w2));
 
-            let n = 
-                (tri.0.normal / t1_wnd.0.z) * w0 * d +
-                (tri.1.normal / t1_wnd.1.z) * w1 * d +
-                (tri.2.normal / t1_wnd.2.z) * w2 * d;
-
+            let n = (tri.0.normal / t1_wnd.0.z) * w0 * d
+                + (tri.1.normal / t1_wnd.1.z) * w1 * d
+                + (tri.2.normal / t1_wnd.2.z) * w2 * d;
 
             if d < depth[i as usize] {
                 let cosa = n.dot(Vector3::new(-0.5, 1.0, -1.0)).max(0.0);
                 let color = Vector3::new(1.0, 0.5, 0.5);
                 let out = color * cosa;
-
 
                 *(imgbuf.get_pixel_mut(x, im_dims.1 - (y + 1))) = image::Rgb([
                     (out.x * 255.0) as u8,
@@ -400,20 +397,37 @@ fn main() {
             unsafe {
                 gl::Enable(gl::DEPTH_TEST);
                 gl::DepthFunc(gl::LESS);
-            
+
                 gl::BindVertexArray(vao);
-                gl::DrawArrays(
-                    gl::TRIANGLES,
-                    0,
-                    (mesh.triangles.len() * 3) as i32,
-                );
+                gl::DrawArrays(gl::TRIANGLES, 0, (mesh.triangles.len() * 3) as i32);
             }
-            
 
             context.swap_buffers().unwrap();
             context.window().request_redraw();
         }
         _ => (),
     });
+}
 
+
+fn test_compiler_basic() {
+    let ast = Program::from_declarations(vec![
+        TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
+            ident: "main".to_owned(),
+            param_types: vec![],
+            statements: vec![Statement::Assignment(
+                "x".to_owned(),
+                Expr::FuncCall("computeA".to_owned(), vec![]),
+            )],
+        }),
+        TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
+            ident: "computeA".to_owned(),
+            param_types: vec![],
+            statements: vec![Statement::Return(Expr::Literal(Literal::IntegerLiteral(5)))],
+        }),
+    ]);
+
+    let output = shadelang::vm::compiler::compile(ast);
+
+    println!("{:#?}", output);
 }
