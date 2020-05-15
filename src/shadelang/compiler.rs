@@ -40,7 +40,7 @@ pub fn inline_pass(mut program: Program) -> Program {
                 if func.ident != "main" {
                     return None;
                 }
-                
+
                 let statements = func
                     .statements
                     .iter()
@@ -57,11 +57,13 @@ pub fn inline_pass(mut program: Program) -> Program {
                     .flatten()
                     .collect();
 
-                Some(TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
-                    ident: func.ident.clone(),
-                    param_types: func.param_types.clone(),
-                    statements,
-                }))
+                Some(TopLevelDeclaration::FunctionDeclaration(
+                    FunctionDeclaration {
+                        ident: func.ident.clone(),
+                        param_types: func.param_types.clone(),
+                        statements,
+                    },
+                ))
             }
             _ => Some(d.clone()),
         })
@@ -75,4 +77,3 @@ pub fn compile(ast: Program) -> Program {
 
     inlined
 }
-

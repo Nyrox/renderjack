@@ -164,14 +164,14 @@ where
     }
 }
 
-use gl::types::*;
 use crate::shadelang::ast::*;
-
+use gl::types::*;
 
 fn main() {
     test_compiler_basic();
-    return;
 
+    test_parser_basic();
+    return;
 
     let im_dims = (800, 600);
 
@@ -409,7 +409,6 @@ fn main() {
     });
 }
 
-
 fn test_compiler_basic() {
     let ast = Program::from_declarations(vec![
         TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
@@ -427,7 +426,28 @@ fn test_compiler_basic() {
         }),
     ]);
 
-    let output = shadelang::vm::compiler::compile(ast);
+    let output = shadelang::compiler::compile(ast);
 
     println!("{:#?}", output);
+}
+
+fn test_parser_basic() {
+    let ast = shadelang::parser::parse(
+        r"
+
+out float a
+
+float computeA() {
+    return 1.0
+}
+
+void main() {
+    a = computeA()
+}
+
+
+    ",
+    );
+
+    println!("{:#?}", ast);
 }

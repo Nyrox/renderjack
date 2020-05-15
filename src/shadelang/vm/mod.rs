@@ -1,1 +1,1 @@
-pub mod compiler;
+pub enum Instruction {}
