@@ -34,8 +34,13 @@ pub fn inline_pass(mut program: Program) -> Program {
     let declarations = program
         .declarations
         .iter()
-        .map(|d| match &d {
+        .flat_map(|d| match &d {
             TopLevelDeclaration::FunctionDeclaration(func) => {
+                // TODO: Maybe implement option to have other functions in the final output?
+                if func.ident != "main" {
+                    return None;
+                }
+                
                 let statements = func
                     .statements
                     .iter()
@@ -52,13 +57,13 @@ pub fn inline_pass(mut program: Program) -> Program {
                     .flatten()
                     .collect();
 
-                TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
+                Some(TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
                     ident: func.ident.clone(),
                     param_types: func.param_types.clone(),
                     statements,
-                })
+                }))
             }
-            _ => d.clone(),
+            _ => Some(d.clone()),
         })
         .collect();
 
