@@ -1,6 +1,6 @@
 use crate::shadelang::ast::*;
 
-pub static mut counter: i32 = 0;
+pub static mut COUNTER: i32 = 0;
 
 ///
 /// returns (
@@ -10,27 +10,29 @@ pub static mut counter: i32 = 0;
 ///
 pub fn inline_expr(program: &Program, expr: &Expr) -> (Vec<Statement>, Expr) {
     match expr {
-        Expr::FuncCall(ident, params) => {
-            let tmpName = unsafe {
-                counter += 1;
-                format!("tmp_{}", counter)
+        Expr::FuncCall(ident, _params) => {
+            let tmp_name = unsafe {
+                COUNTER += 1;
+                format!("tmp_{}", COUNTER)
             };
             let statements = &program.get_function(ident.to_string()).unwrap().statements;
             let statements = statements
                 .iter()
                 .map(|s| match &*s {
-                    Statement::Return(expr) => Statement::Assignment(tmpName.clone(), expr.clone()),
+                    Statement::Return(expr) => {
+                        Statement::Assignment(tmp_name.clone(), expr.clone())
+                    }
                     _ => s.clone(),
                 })
                 .collect();
 
-            (statements, Expr::Symbol(Symbol { ident: tmpName }))
+            (statements, Expr::Symbol(Symbol { ident: tmp_name }))
         }
         _ => (vec![], expr.clone()),
     }
 }
 
-pub fn inline_pass(mut program: Program) -> Program {
+pub fn inline_pass(program: Program) -> Program {
     let declarations = program
         .declarations
         .iter()

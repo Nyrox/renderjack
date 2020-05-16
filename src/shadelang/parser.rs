@@ -27,7 +27,6 @@ pub enum Token {
     IntegerLiteral(i64),
 }
 
-
 pub enum ScanningProduct {
     Skip,
     Finished,
@@ -38,7 +37,6 @@ type ScanningError = ();
 
 type ScanningResult = Result<ScanningProduct, ScanningError>;
 
-
 pub struct Scanner<I: Iterator<Item = char>> {
     input: I,
     line: u32,
@@ -47,7 +45,11 @@ pub struct Scanner<I: Iterator<Item = char>> {
 
 impl<I: Iterator<Item = char>> Scanner<I> {
     pub fn new(input: I) -> Self {
-        Scanner { input, line: 1, peeked: None }
+        Scanner {
+            input,
+            line: 1,
+            peeked: None,
+        }
     }
 
     pub fn scan_all(mut self) -> Result<Vec<Token>, ScanningError> {
@@ -87,7 +89,7 @@ impl<I: Iterator<Item = char>> Scanner<I> {
     pub fn keyword(&self, what: &str) -> Option<Token> {
         match what.to_owned().to_lowercase().as_str() {
             "out" => Some(Token::Out),
-            _ => None
+            _ => None,
         }
     }
 
@@ -129,8 +131,12 @@ impl<I: Iterator<Item = char>> Scanner<I> {
         loop {
             match self.peek() {
                 Some(c) if c.is_alphanumeric() => ident.push(self.advance().unwrap()),
-                None => { return Err(()); },
-                _ => { break; }
+                None => {
+                    return Err(());
+                }
+                _ => {
+                    break;
+                }
             }
         }
 
@@ -143,7 +149,7 @@ impl<I: Iterator<Item = char>> Scanner<I> {
     pub fn scan_numerics(&mut self, begin: char) -> ScanningResult {
         let mut text = String::new();
         text.push(begin);
-        
+
         while self.peek().unwrap().is_numeric() {
             text.push(self.advance().unwrap());
         }
@@ -154,20 +160,17 @@ impl<I: Iterator<Item = char>> Scanner<I> {
                 text.push(self.advance().unwrap());
             }
 
-            match text.parse::<f64>()
-            {
+            match text.parse::<f64>() {
                 Ok(f) => Ok(ScanningProduct::Token(Token::FloatLiteral(f))),
-                Err(_) => Err(())
+                Err(_) => Err(()),
             }
-        }
-        else {
+        } else {
             match text.parse::<i64>() {
                 Ok(i) => Ok(ScanningProduct::Token(Token::IntegerLiteral(i))),
-                Err(_) => Err(())
+                Err(_) => Err(()),
             }
         }
     }
-
 }
 
 pub fn parse(input: impl AsRef<str>) -> Program {

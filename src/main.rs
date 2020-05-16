@@ -165,7 +165,6 @@ where
 }
 
 use crate::shadelang::ast::*;
-use gl::types::*;
 
 fn main() {
     test_compiler_basic();
@@ -376,7 +375,7 @@ fn main() {
     imgbuf.save("output.png").unwrap();
 
     use glutin::event::{Event, WindowEvent};
-    use glutin::event_loop::{ControlFlow, EventLoop};
+    use glutin::event_loop::ControlFlow;
     events_loop.run(move |event, _, control_flow| match event {
         Event::LoopDestroyed => return,
         Event::WindowEvent { event, .. } => match event {
@@ -391,8 +390,8 @@ fn main() {
             }
 
             shader.bind();
-            shader.setUniform("view", camera.get_view_matrix());
-            shader.setUniform("proj", camera.get_projection_matrix());
+            shader.set_uniform("view", camera.get_view_matrix());
+            shader.set_uniform("proj", camera.get_projection_matrix());
 
             unsafe {
                 gl::Enable(gl::DEPTH_TEST);

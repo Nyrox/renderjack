@@ -100,7 +100,7 @@ impl Shader {
         Ok(())
     }
 
-    pub fn setUniform<T>(&self, id: &str, val: T)
+    pub fn set_uniform<T>(&self, id: &str, val: T)
     where
         T: Uniform,
     {
