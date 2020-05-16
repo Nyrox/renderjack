@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
@@ -437,7 +439,7 @@ fn test_parser_basic() {
 out float a
 
 float computeA() {
-    return 1.0
+    return 1.0 + 2.0 * 5.0
 }
 
 void main() {
@@ -449,4 +451,6 @@ void main() {
     );
 
     println!("{:#?}", ast);
+
+    println!("{:#?}", shadelang::compiler::compile(ast));
 }

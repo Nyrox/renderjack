@@ -1,6 +1,6 @@
 pub type Ident = String;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub enum BinaryOperator {
     Add,
     Sub,
@@ -8,7 +8,7 @@ pub enum BinaryOperator {
     Div,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub enum UnaryOperator {
     Not,
     Sub,
@@ -18,6 +18,15 @@ pub enum UnaryOperator {
 pub enum Literal {
     IntegerLiteral(i64),
     DecimalLiteral(f64),
+}
+
+#[derive(Debug, Clone)]
+pub enum TypeKind {
+    Void,
+    I32,
+    I64,
+    F32,
+    F64,
 }
 
 #[derive(Clone, Debug)]
@@ -50,6 +59,7 @@ pub struct FunctionDeclaration {
 #[derive(Clone, Debug)]
 pub enum TopLevelDeclaration {
     FunctionDeclaration(FunctionDeclaration),
+    OutParameterDeclaration(TypeKind, Ident),
 }
 
 #[derive(Clone, Debug)]
