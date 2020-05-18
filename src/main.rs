@@ -419,12 +419,14 @@ float computeA() {
 }
 
 float computeB() {
-    return computeA() * 5.0
+    c = 5.0
+    return computeA() * c
 }
 
 
 void main() {
     a = computeB()
+    b = a * 5.0
 }
 
 

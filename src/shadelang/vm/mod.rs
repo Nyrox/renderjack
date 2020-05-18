@@ -20,15 +20,23 @@ impl<'a> VirtualMachine<'a> {
         let fnc = self.program.data.functions.get(id).unwrap();
         self.isp = fnc.address;
         let mut depth = 0;
+        
+        for _ in 0..(self.program.data.static_section_size / 4) {
+            self.push_stack_raw(0);
+        }
+
+        let mut stack_base = self.stack.len();
+
         loop {
             let (op, p) = self.program.code[self.isp].get_inst();
-            dbg!(self.isp);
+            dbg!(op);
             self.isp = self.isp + 1;
 
             match op {
                 OpCode::Call => {
                     depth += 1;
                     self.push_stack_raw(self.isp as u32);
+                    self.push_stack_raw(stack_base as u32);
                     self.isp = p as usize;
                 }
                 OpCode::ConstF32 => {
@@ -48,10 +56,16 @@ impl<'a> VirtualMachine<'a> {
                     self.push_stack_raw(std::mem::transmute(f1 + f2));
                 },
                 OpCode::Mov4 => {
-                    // unsafe {
-                    //     let val = self.pop_stack::<u32>();
-                    //     self.write_stack(p as usize, val);
-                    // }
+                    unsafe {
+                        let val = self.pop_stack::<u32>();
+                        self.write_stack(stack_base + p as usize, val);
+                    }
+                }
+                OpCode::Load4 => {
+                    unsafe {
+                        let val = self.load_stack::<u32>(stack_base + p as usize);
+                        self.push_stack_raw(std::mem::transmute(val));
+                    }
                 }
                 OpCode::Ret => {
                     dbg!(depth);
@@ -63,6 +77,11 @@ impl<'a> VirtualMachine<'a> {
                     depth -= 1;
                     let reta = unsafe {
                         let rv = self.pop_stack::<u32>();
+                        for _ in 0..p {
+                            self.pop_stack::<u8>();
+                        }
+                        let sb = self.pop_stack::<u32>();
+                        let stack_base = sb as usize;
                         let ra = self.pop_stack::<u32>();
                         self.push_stack_raw(rv);
                         ra
@@ -80,6 +99,13 @@ impl<'a> VirtualMachine<'a> {
         let ptr = self.stack.as_mut_ptr().offset(offset as isize) as *mut T;
 
         *ptr = val;
+    }
+
+    pub unsafe fn load_stack<T: Copy + std::fmt::Debug>(&mut self, offset: usize) -> T {
+        let ptr = self.stack.as_ptr().offset(offset as isize) as *const T;
+        dbg!(*ptr);
+
+        *ptr
     }
 
     pub fn push_stack_raw(&mut self, data: u32) {

@@ -8,13 +8,14 @@ pub fn compile(ast: Program) -> VMProgram {
 
 pub fn codegen(ast: Program) -> VMProgram {
     let mut program = VMProgram::new();
-    let mut stack_offset = 0;
-
+    let mut static_section = 0;
+    
     for d in ast.declarations.iter() {
         match d {
             TopLevelDeclaration::FunctionDeclaration(f) => {
                 let mut funcMeta = FuncMeta::new(program.code.len());
                 let mut hasReturn = false;
+                let mut stack_offset = 0;
 
                 for s in f.statements.iter() {
                     match s {
@@ -23,55 +24,62 @@ pub fn codegen(ast: Program) -> VMProgram {
                                 i.clone(),
                                 SymbolMeta {
                                     offset: stack_offset,
+                                    is_static: false,
                                     type_kind: TypeKind::F32,
                                 },
                             );
-
-                            generate_expr(&mut program, &ast, expr);
-                            program
+                            
+                            generate_expr(&mut program, &ast, &funcMeta, expr);
+                            
+                            if let Some(_) = program.data.global_symbols.get(i) {
+                                
+                                program
                                 .code
                                 .push(MemoryCell::with_data(OpCode::Mov4, stack_offset as u16));
-
+                            }
+                            
                             stack_offset += 4;
                         }
                         Statement::Return(expr) => {
-                            generate_expr(&mut program, &ast, expr);
-                            program.code.push(MemoryCell::plain_inst(OpCode::Ret));
+                            generate_expr(&mut program, &ast, &funcMeta, expr);
+                            program.code.push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
                             hasReturn = true;
                         }
                     }
                 }
-
+                
                 if !hasReturn {
                     program.code.push(MemoryCell::plain_inst(OpCode::Ret));
                 }
-
+                
                 program.data.functions.insert(f.ident.clone(), funcMeta);
             }
             TopLevelDeclaration::OutParameterDeclaration(tk, id) => {
                 program.data.global_symbols.insert(
                     id.clone(),
                     SymbolMeta {
-                        offset: stack_offset,
+                        offset: static_section,
                         type_kind: *tk,
+                        is_static: true,
                     },
                 );
-
-                stack_offset += 4;
+                
+                static_section += 4;
             }
             _ => unimplemented!(),
         }
     }
-
-    program.data.min_stack_size = stack_offset;
+    
+    program.data.static_section_size = static_section;
+    program.data.min_stack_size = static_section + 1024;
     program
 }
 
-pub fn generate_expr(program: &mut VMProgram, ast: &Program, expr: &Expr) {
+pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, expr: &Expr) {
     match expr {
         Expr::BinaryOp(op, e1, e2) => {
-            generate_expr(program, ast, e1);
-            generate_expr(program, ast, e2);
+            generate_expr(program, ast, fnc, e1);
+            generate_expr(program, ast, fnc, e2);
 
             let inst = match op {
                 BinaryOperator::Add => OpCode::AddF32,
@@ -97,7 +105,11 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, expr: &Expr) {
                     .push(MemoryCell::raw(unsafe { std::mem::transmute(*f as f32) }));
             }
             _ => unimplemented!(),
-        },
+        }
+        Expr::Symbol(s) => {
+            let offset = fnc.symbols.get(&s.ident).unwrap().offset;
+            program.code.push(MemoryCell::with_data(OpCode::Load4, offset as u16));
+        }
         _ => {
             dbg!(expr);
             unimplemented!();
@@ -121,6 +133,7 @@ pub enum OpCode {
     ConstF32,
 
     Mov4,
+    Load4,
 
     Ret,
     Call,
@@ -133,6 +146,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct SymbolMeta {
     offset: usize,
+    is_static: bool,
     type_kind: TypeKind,
 }
 
@@ -156,6 +170,7 @@ pub struct ProgramData {
     pub functions: HashMap<String, FuncMeta>,
     pub global_symbols: HashMap<String, SymbolMeta>,
     pub min_stack_size: usize,
+    pub static_section_size: usize,
 }
 
 impl ProgramData {
@@ -164,6 +179,7 @@ impl ProgramData {
             functions: HashMap::new(),
             global_symbols: HashMap::new(),
             min_stack_size: 0,
+            static_section_size: 0,
         }
     }
 }
