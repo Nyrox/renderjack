@@ -2,80 +2,213 @@ use crate::shadelang::ast::*;
 
 pub static mut COUNTER: i32 = 0;
 
-///
-/// returns (
-///    a series of statements to insert before the current one,
-///    the replaced expression   
-/// )
-///
-pub fn inline_expr(program: &Program, expr: &Expr) -> (Vec<Statement>, Expr) {
-    match expr {
-        Expr::FuncCall(ident, _params) => {
-            let tmp_name = unsafe {
-                COUNTER += 1;
-                format!("tmp_{}", COUNTER)
-            };
-            let statements = &program.get_function(ident.to_string()).unwrap().statements;
-            let statements = statements
-                .iter()
-                .map(|s| match &*s {
-                    Statement::Return(expr) => {
-                        Statement::Assignment(tmp_name.clone(), expr.clone())
-                    }
-                    _ => s.clone(),
-                })
-                .collect();
+pub fn compile(ast: Program) -> VMProgram {
+    codegen(ast)
+}
 
-            (statements, Expr::Symbol(Symbol { ident: tmp_name }))
+pub fn codegen(ast: Program) -> VMProgram {
+    let mut program = VMProgram::new();
+    let mut stack_offset = 0;
+
+    for d in ast.declarations.iter() {
+        match d {
+            TopLevelDeclaration::FunctionDeclaration(f) => {
+                let mut funcMeta = FuncMeta::new(program.code.len());
+
+                for s in f.statements.iter() {
+                    match s {
+                        Statement::Assignment(i, expr) => {
+                            funcMeta.symbols.insert(
+                                i.clone(),
+                                SymbolMeta {
+                                    offset: stack_offset,
+                                    type_kind: TypeKind::F32,
+                                },
+                            );
+                            stack_offset += 4;
+
+                            generate_expr(&mut program, &ast, expr);
+                        }
+                        Statement::Return(expr) => {
+                            generate_expr(&mut program, &ast, expr);
+                            program.code.push(MemoryCell::plain_inst(OpCode::Ret));
+                        }
+                    }
+                }
+
+                program.data.functions.insert(f.ident.clone(), funcMeta);
+            }
+            TopLevelDeclaration::OutParameterDeclaration(tk, id) => {
+                program.data.global_symbols.insert(
+                    id.clone(),
+                    SymbolMeta {
+                        offset: stack_offset,
+                        type_kind: *tk,
+                    },
+                );
+
+                stack_offset += 4;
+            }
+            _ => unimplemented!(),
         }
-        _ => (vec![], expr.clone()),
+    }
+
+    program
+}
+
+pub fn generate_expr(program: &mut VMProgram, ast: &Program, expr: &Expr) {
+    match expr {
+        Expr::BinaryOp(op, e1, e2) => {
+            generate_expr(program, ast, e1);
+            generate_expr(program, ast, e2);
+            
+            let inst = match op {
+                BinaryOperator::Add => OpCode::AddF32,
+                BinaryOperator::Sub => OpCode::SubF32,
+                BinaryOperator::Mul => OpCode::MulF32,
+                BinaryOperator::Div => OpCode::DivF32,
+            };
+
+            program.code.push(MemoryCell::plain_inst(inst));
+        },
+        Expr::FuncCall(id, args) => {
+            let offset = program.data.functions.get(id).unwrap().address;
+            
+            program.code.push(MemoryCell::with_data(OpCode::Call, offset as u16));
+        },
+        Expr::Literal(l) => {
+            match l {
+                Literal::DecimalLiteral(f) => {
+                    program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
+                    program.code.push(MemoryCell::raw(unsafe {
+                        std::mem::transmute(*f as f32)
+                    }));
+                },
+                _ => unimplemented!(),
+            }
+        }
+        _ => {
+            dbg!(expr);
+            unimplemented!();
+        }
     }
 }
 
-pub fn inline_pass(program: Program) -> Program {
-    let declarations = program
-        .declarations
-        .iter()
-        .flat_map(|d| match &d {
-            TopLevelDeclaration::FunctionDeclaration(func) => {
-                // TODO: Maybe implement option to have other functions in the final output?
-                if func.ident != "main" {
-                    return None;
-                }
+#[repr(u16)]
+#[derive(Clone, Copy, Debug)]
+pub enum OpCode {
+    AddI32,
+    SubI32,
+    MulI32,
+    DivI32,
 
-                let statements = func
-                    .statements
-                    .iter()
-                    .map(|s| match s {
-                        Statement::Assignment(i, expr) => {
-                            let (mut insert, e) = inline_expr(&program, expr);
+    AddF32,
+    SubF32,
+    MulF32,
+    DivF32,
 
-                            insert.push(Statement::Assignment(i.to_string(), e));
+    ConstF32,
 
-                            insert
-                        }
-                        _ => vec![s.clone()],
-                    })
-                    .flatten()
-                    .collect();
-
-                Some(TopLevelDeclaration::FunctionDeclaration(
-                    FunctionDeclaration {
-                        ident: func.ident.clone(),
-                        param_types: func.param_types.clone(),
-                        statements,
-                    },
-                ))
-            }
-            _ => Some(d.clone()),
-        })
-        .collect();
-
-    Program { declarations }
+    Ret,
+    Call,
+    Jmp,
+    JmpIf,
 }
 
-pub fn compile(ast: Program) -> Program {
-    let inlined = inline_pass(ast);
+use std::collections::HashMap;
 
-    inlined
+#[derive(Debug, Clone)]
+pub struct SymbolMeta {
+    offset: usize,
+    type_kind: TypeKind,
+}
+
+#[derive(Debug, Clone)]
+pub struct FuncMeta {
+    address: usize,
+    symbols: HashMap<String, SymbolMeta>,
+}
+
+impl FuncMeta {
+    pub fn new(address: usize) -> Self {
+        FuncMeta {
+            address,
+            symbols: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramData {
+    functions: HashMap<String, FuncMeta>,
+    global_symbols: HashMap<String, SymbolMeta>,
+}
+
+impl ProgramData {
+    pub fn new() -> Self {
+        ProgramData {
+            functions: HashMap::new(),
+            global_symbols: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct MemoryCell {
+    data: u32,
+}
+
+impl std::fmt::Debug for MemoryCell {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (op, ax) = self.get_inst();
+        
+        fmt.debug_struct("MemoryCell")
+        .field("op", &op)
+        .field("ax", &ax)
+        .finish()
+    }
+}
+
+
+impl MemoryCell {
+    pub fn raw(data: u32) -> Self {
+        MemoryCell {
+            data,
+        }
+    }
+
+    pub fn plain_inst(inst: OpCode) -> Self {
+        MemoryCell {
+            data: inst as u16 as u32,
+        }
+    }
+    
+    pub fn with_data(inst: OpCode, data: u16) -> Self {
+        MemoryCell {
+            data: (inst as u16 as u32) | ((data as u32) << 16),
+        }
+    }
+
+    pub fn get_inst(&self) -> (OpCode, u16) {
+        (
+        unsafe {
+            std::mem::transmute(self.data as u16)},
+            (self.data >> 16) as u16
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct VMProgram {
+    code: Vec<MemoryCell>,
+    data: ProgramData,
+}
+
+impl VMProgram {
+    pub fn new() -> Self {
+        VMProgram {
+            code: Vec::new(),
+            data: ProgramData::new(),
+        }
+    }
 }

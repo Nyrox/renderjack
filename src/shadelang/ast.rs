@@ -20,13 +20,11 @@ pub enum Literal {
     DecimalLiteral(f64),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum TypeKind {
     Void,
     I32,
-    I64,
     F32,
-    F64,
 }
 
 #[derive(Clone, Debug)]

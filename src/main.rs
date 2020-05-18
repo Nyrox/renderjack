@@ -169,8 +169,6 @@ where
 use crate::shadelang::ast::*;
 
 fn main() {
-    test_compiler_basic();
-
     test_parser_basic();
     return;
 
@@ -410,28 +408,6 @@ fn main() {
     });
 }
 
-fn test_compiler_basic() {
-    let ast = Program::from_declarations(vec![
-        TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
-            ident: "main".to_owned(),
-            param_types: vec![],
-            statements: vec![Statement::Assignment(
-                "x".to_owned(),
-                Expr::FuncCall("computeA".to_owned(), vec![]),
-            )],
-        }),
-        TopLevelDeclaration::FunctionDeclaration(FunctionDeclaration {
-            ident: "computeA".to_owned(),
-            param_types: vec![],
-            statements: vec![Statement::Return(Expr::Literal(Literal::IntegerLiteral(5)))],
-        }),
-    ]);
-
-    let output = shadelang::compiler::compile(ast);
-
-    println!("{:#?}", output);
-}
-
 fn test_parser_basic() {
     let ast = shadelang::parser::parse(
         r"
@@ -442,15 +418,18 @@ float computeA() {
     return 1.0 + 2.0 * 5.0
 }
 
+float computeB() {
+    return computeA() * 5.0
+}
+
+
 void main() {
-    a = computeA()
+    a = computeB()
 }
 
 
     ",
     );
-
-    println!("{:#?}", ast);
 
     println!("{:#?}", shadelang::compiler::compile(ast));
 }
