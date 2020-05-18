@@ -14,6 +14,7 @@ pub fn codegen(ast: Program) -> VMProgram {
         match d {
             TopLevelDeclaration::FunctionDeclaration(f) => {
                 let mut funcMeta = FuncMeta::new(program.code.len());
+                let mut hasReturn = false;
 
                 for s in f.statements.iter() {
                     match s {
@@ -25,15 +26,24 @@ pub fn codegen(ast: Program) -> VMProgram {
                                     type_kind: TypeKind::F32,
                                 },
                             );
-                            stack_offset += 4;
 
                             generate_expr(&mut program, &ast, expr);
+                            program
+                                .code
+                                .push(MemoryCell::with_data(OpCode::Mov4, stack_offset as u16));
+
+                            stack_offset += 4;
                         }
                         Statement::Return(expr) => {
                             generate_expr(&mut program, &ast, expr);
                             program.code.push(MemoryCell::plain_inst(OpCode::Ret));
+                            hasReturn = true;
                         }
                     }
+                }
+
+                if !hasReturn {
+                    program.code.push(MemoryCell::plain_inst(OpCode::Ret));
                 }
 
                 program.data.functions.insert(f.ident.clone(), funcMeta);
@@ -53,6 +63,7 @@ pub fn codegen(ast: Program) -> VMProgram {
         }
     }
 
+    program.data.min_stack_size = stack_offset;
     program
 }
 
@@ -61,7 +72,7 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, expr: &Expr) {
         Expr::BinaryOp(op, e1, e2) => {
             generate_expr(program, ast, e1);
             generate_expr(program, ast, e2);
-            
+
             let inst = match op {
                 BinaryOperator::Add => OpCode::AddF32,
                 BinaryOperator::Sub => OpCode::SubF32,
@@ -70,23 +81,23 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, expr: &Expr) {
             };
 
             program.code.push(MemoryCell::plain_inst(inst));
-        },
+        }
         Expr::FuncCall(id, args) => {
             let offset = program.data.functions.get(id).unwrap().address;
-            
-            program.code.push(MemoryCell::with_data(OpCode::Call, offset as u16));
-        },
-        Expr::Literal(l) => {
-            match l {
-                Literal::DecimalLiteral(f) => {
-                    program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
-                    program.code.push(MemoryCell::raw(unsafe {
-                        std::mem::transmute(*f as f32)
-                    }));
-                },
-                _ => unimplemented!(),
-            }
+
+            program
+                .code
+                .push(MemoryCell::with_data(OpCode::Call, offset as u16));
         }
+        Expr::Literal(l) => match l {
+            Literal::DecimalLiteral(f) => {
+                program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
+                program
+                    .code
+                    .push(MemoryCell::raw(unsafe { std::mem::transmute(*f as f32) }));
+            }
+            _ => unimplemented!(),
+        },
         _ => {
             dbg!(expr);
             unimplemented!();
@@ -109,6 +120,8 @@ pub enum OpCode {
 
     ConstF32,
 
+    Mov4,
+
     Ret,
     Call,
     Jmp,
@@ -125,8 +138,8 @@ pub struct SymbolMeta {
 
 #[derive(Debug, Clone)]
 pub struct FuncMeta {
-    address: usize,
-    symbols: HashMap<String, SymbolMeta>,
+    pub address: usize,
+    pub symbols: HashMap<String, SymbolMeta>,
 }
 
 impl FuncMeta {
@@ -140,8 +153,9 @@ impl FuncMeta {
 
 #[derive(Debug, Clone)]
 pub struct ProgramData {
-    functions: HashMap<String, FuncMeta>,
-    global_symbols: HashMap<String, SymbolMeta>,
+    pub functions: HashMap<String, FuncMeta>,
+    pub global_symbols: HashMap<String, SymbolMeta>,
+    pub min_stack_size: usize,
 }
 
 impl ProgramData {
@@ -149,32 +163,30 @@ impl ProgramData {
         ProgramData {
             functions: HashMap::new(),
             global_symbols: HashMap::new(),
+            min_stack_size: 0,
         }
     }
 }
 
 #[derive(Clone)]
 pub struct MemoryCell {
-    data: u32,
+    pub data: u32,
 }
 
 impl std::fmt::Debug for MemoryCell {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (op, ax) = self.get_inst();
-        
+
         fmt.debug_struct("MemoryCell")
-        .field("op", &op)
-        .field("ax", &ax)
-        .finish()
+            .field("op", &op)
+            .field("ax", &ax)
+            .finish()
     }
 }
 
-
 impl MemoryCell {
     pub fn raw(data: u32) -> Self {
-        MemoryCell {
-            data,
-        }
+        MemoryCell { data }
     }
 
     pub fn plain_inst(inst: OpCode) -> Self {
@@ -182,7 +194,7 @@ impl MemoryCell {
             data: inst as u16 as u32,
         }
     }
-    
+
     pub fn with_data(inst: OpCode, data: u16) -> Self {
         MemoryCell {
             data: (inst as u16 as u32) | ((data as u32) << 16),
@@ -191,17 +203,16 @@ impl MemoryCell {
 
     pub fn get_inst(&self) -> (OpCode, u16) {
         (
-        unsafe {
-            std::mem::transmute(self.data as u16)},
-            (self.data >> 16) as u16
+            unsafe { std::mem::transmute(self.data as u16) },
+            (self.data >> 16) as u16,
         )
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct VMProgram {
-    code: Vec<MemoryCell>,
-    data: ProgramData,
+    pub code: Vec<MemoryCell>,
+    pub data: ProgramData,
 }
 
 impl VMProgram {

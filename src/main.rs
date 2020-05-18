@@ -431,5 +431,12 @@ void main() {
     ",
     );
 
-    println!("{:#?}", shadelang::compiler::compile(ast));
+    let program = shadelang::compiler::compile(ast);
+
+    println!("{:#?}", program);
+
+    let mut vm = shadelang::vm::VirtualMachine::new(&program);
+    vm.run_fn("main");
+
+    println!("{:?}", bytemuck::cast_slice::<_, f32>(vm.stack.as_slice()));
 }
