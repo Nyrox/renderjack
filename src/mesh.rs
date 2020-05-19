@@ -86,7 +86,7 @@ pub fn load_ply(path: PathBuf) -> Mesh {
     }
 
     // Parse faces
-    'faces: while let Some(line) = lines.next() {
+    while let Some(line) = lines.next() {
         let tokens = line.split_whitespace();
         let values = tokens
             .map(|t| t.parse::<u32>().unwrap())

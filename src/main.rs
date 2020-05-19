@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
@@ -245,7 +243,7 @@ fn main() {
 
         macro_rules! offset_of {
             ($ty:ty, $field:ident) => {
-                unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
+                &(*(0 as *const $ty)).$field as *const _ as usize
             };
         }
 

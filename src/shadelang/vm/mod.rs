@@ -60,7 +60,7 @@ impl<'a> VirtualMachine<'a> {
                     let val = self.pop_stack::<u32>();
                     self.write_stack(stack_base + p as usize, val);
                 },
-                OpCode::Mov4_Global => unsafe {
+                OpCode::Mov4Global => unsafe {
                     let val = self.pop_stack::<u32>();
                     self.write_stack(p as usize, val);
                 },
@@ -74,9 +74,7 @@ impl<'a> VirtualMachine<'a> {
                     dbg!(std::mem::transmute::<_, f32>(val));
                     self.push_stack_raw(std::mem::transmute(val));
                 },
-                OpCode::Void => unsafe {
-                    self.push_stack_raw(0);
-                },
+                OpCode::Void => self.push_stack_raw(0),
                 OpCode::Ret => {
                     dbg!(depth);
                     dbg!(self.stack.len());

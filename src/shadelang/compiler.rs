@@ -13,22 +13,22 @@ pub fn codegen(ast: Program) -> VMProgram {
     for d in ast.declarations.iter() {
         match d {
             TopLevelDeclaration::FunctionDeclaration(f) => {
-                let mut funcMeta = FuncMeta::new(program.code.len());
-                let mut hasReturn = false;
+                let mut func_meta = FuncMeta::new(program.code.len());
+                let mut has_return = false;
                 let mut stack_offset = 0;
 
                 for s in f.statements.iter() {
                     match s {
                         Statement::Assignment(i, expr) => {
-                            generate_expr(&mut program, &ast, &funcMeta, expr);
+                            generate_expr(&mut program, &ast, &func_meta, expr);
 
                             if let Some(o) = program.data.global_symbols.get(i) {
                                 program.code.push(MemoryCell::with_data(
-                                    OpCode::Mov4_Global,
+                                    OpCode::Mov4Global,
                                     o.offset as u16,
                                 ));
                             } else {
-                                funcMeta.symbols.insert(
+                                func_meta.symbols.insert(
                                     i.clone(),
                                     SymbolMeta {
                                         offset: stack_offset,
@@ -40,23 +40,23 @@ pub fn codegen(ast: Program) -> VMProgram {
                             }
                         }
                         Statement::Return(expr) => {
-                            generate_expr(&mut program, &ast, &funcMeta, expr);
+                            generate_expr(&mut program, &ast, &func_meta, expr);
                             program
                                 .code
                                 .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
-                            hasReturn = true;
+                            has_return = true;
                         }
                     }
                 }
 
-                if !hasReturn {
+                if !has_return {
                     program.code.push(MemoryCell::plain_inst(OpCode::Void));
                     program
                         .code
                         .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
                 }
 
-                program.data.functions.insert(f.ident.clone(), funcMeta);
+                program.data.functions.insert(f.ident.clone(), func_meta);
             }
             TopLevelDeclaration::OutParameterDeclaration(tk, id) => {
                 program.data.global_symbols.insert(
@@ -140,8 +140,8 @@ pub enum OpCode {
     Void,
     Mov4,
     Load4,
-    Mov4_Global,
-    Load4_Global,
+    Mov4Global,
+    Load4Global,
 
     Ret,
     Call,

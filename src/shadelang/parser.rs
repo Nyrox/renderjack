@@ -84,7 +84,7 @@ pub fn parse_declarations(
         match tokens.next() {
             // Out Specifiers
             Some(Token::Out) => {
-                let typeKind = match tokens.expect_next()? {
+                let type_kind = match tokens.expect_next()? {
                     Token::Float => TypeKind::F32,
                     t => {
                         return Err(ParsingError::UnexpectedToken(t));
@@ -93,7 +93,7 @@ pub fn parse_declarations(
 
                 let ident = tokens.expect_identifier()?;
                 declarations.push(TopLevelDeclaration::OutParameterDeclaration(
-                    typeKind, ident,
+                    type_kind, ident,
                 ));
                 continue;
             }
