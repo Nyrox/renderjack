@@ -99,7 +99,7 @@ pub fn parse_declarations(
             }
             // func declarations
             Some(t) if get_typekind(&t).is_some() => {
-                let tk = get_typekind(&t).unwrap();
+                let _tk = get_typekind(&t).unwrap();
                 let ident = tokens.expect_identifier()?;
 
                 // arg list

@@ -9,7 +9,7 @@ pub fn compile(ast: Program) -> VMProgram {
 pub fn codegen(ast: Program) -> VMProgram {
     let mut program = VMProgram::new();
     let mut static_section = 0;
-    
+
     for d in ast.declarations.iter() {
         match d {
             TopLevelDeclaration::FunctionDeclaration(f) => {
@@ -20,38 +20,42 @@ pub fn codegen(ast: Program) -> VMProgram {
                 for s in f.statements.iter() {
                     match s {
                         Statement::Assignment(i, expr) => {
-                            funcMeta.symbols.insert(
-                                i.clone(),
-                                SymbolMeta {
-                                    offset: stack_offset,
-                                    is_static: false,
-                                    type_kind: TypeKind::F32,
-                                },
-                            );
-                            
                             generate_expr(&mut program, &ast, &funcMeta, expr);
-                            
-                            if let Some(_) = program.data.global_symbols.get(i) {
-                                
-                                program
-                                .code
-                                .push(MemoryCell::with_data(OpCode::Mov4, stack_offset as u16));
+
+                            if let Some(o) = program.data.global_symbols.get(i) {
+                                program.code.push(MemoryCell::with_data(
+                                    OpCode::Mov4_Global,
+                                    o.offset as u16,
+                                ));
+                            } else {
+                                funcMeta.symbols.insert(
+                                    i.clone(),
+                                    SymbolMeta {
+                                        offset: stack_offset,
+                                        is_static: false,
+                                        type_kind: TypeKind::F32,
+                                    },
+                                );
+                                stack_offset += 4;
                             }
-                            
-                            stack_offset += 4;
                         }
                         Statement::Return(expr) => {
                             generate_expr(&mut program, &ast, &funcMeta, expr);
-                            program.code.push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
+                            program
+                                .code
+                                .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
                             hasReturn = true;
                         }
                     }
                 }
-                
+
                 if !hasReturn {
-                    program.code.push(MemoryCell::plain_inst(OpCode::Ret));
+                    program.code.push(MemoryCell::plain_inst(OpCode::Void));
+                    program
+                        .code
+                        .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
                 }
-                
+
                 program.data.functions.insert(f.ident.clone(), funcMeta);
             }
             TopLevelDeclaration::OutParameterDeclaration(tk, id) => {
@@ -63,13 +67,13 @@ pub fn codegen(ast: Program) -> VMProgram {
                         is_static: true,
                     },
                 );
-                
+
                 static_section += 4;
             }
             _ => unimplemented!(),
         }
     }
-    
+
     program.data.static_section_size = static_section;
     program.data.min_stack_size = static_section + 1024;
     program
@@ -90,7 +94,7 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
 
             program.code.push(MemoryCell::plain_inst(inst));
         }
-        Expr::FuncCall(id, args) => {
+        Expr::FuncCall(id, _args) => {
             let offset = program.data.functions.get(id).unwrap().address;
 
             program
@@ -105,10 +109,12 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                     .push(MemoryCell::raw(unsafe { std::mem::transmute(*f as f32) }));
             }
             _ => unimplemented!(),
-        }
+        },
         Expr::Symbol(s) => {
             let offset = fnc.symbols.get(&s.ident).unwrap().offset;
-            program.code.push(MemoryCell::with_data(OpCode::Load4, offset as u16));
+            program
+                .code
+                .push(MemoryCell::with_data(OpCode::Load4, offset as u16));
         }
         _ => {
             dbg!(expr);
@@ -131,9 +137,11 @@ pub enum OpCode {
     DivF32,
 
     ConstF32,
-
+    Void,
     Mov4,
     Load4,
+    Mov4_Global,
+    Load4_Global,
 
     Ret,
     Call,

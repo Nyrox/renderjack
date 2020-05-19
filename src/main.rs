@@ -166,7 +166,7 @@ where
     }
 }
 
-use crate::shadelang::ast::*;
+
 
 fn main() {
     test_parser_basic();
@@ -425,8 +425,9 @@ float computeB() {
 
 
 void main() {
-    a = computeB()
-    b = a * 5.0
+    c = computeB()
+    b = c * 5.0
+    a = b
 }
 
 
