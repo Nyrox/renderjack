@@ -1,17 +1,4 @@
-
-
-#[derive(Debug, Clone)]
-pub struct Position {
-    line: u32,
-    character: Option<u32>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Spanned<T> {
-    item: T,
-    from: Position,
-    to: Position,
-}
+use crate::shadelang::ast::{Position, Spanned};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -41,16 +28,22 @@ pub enum Token {
 pub enum ScanningProduct {
     Skip,
     Finished,
-    Token(Token),
+    Token(Spanned<Token>),
 }
 
-type ScanningError = ();
+#[derive(Clone, Debug)]
+pub enum ScanningError {
+    UnexpectedCharacter(Spanned<char>),
+    InvalidLiteral(Spanned<()>),
+    UnexpectedEndOfFile,
+}
 
 type ScanningResult = Result<ScanningProduct, ScanningError>;
 
 pub struct Scanner<I: Iterator<Item = char>> {
     input: I,
     line: u32,
+    offset: u32,
     peeked: Option<char>,
 }
 
@@ -59,11 +52,12 @@ impl<I: Iterator<Item = char>> Scanner<I> {
         Scanner {
             input,
             line: 1,
+            offset: 0,
             peeked: None,
         }
     }
 
-    pub fn scan_all(mut self) -> Result<Vec<Token>, ScanningError> {
+    pub fn scan_all(mut self) -> Result<Vec<Spanned<Token>>, ScanningError> {
         let mut output = Vec::new();
 
         loop {
@@ -78,6 +72,7 @@ impl<I: Iterator<Item = char>> Scanner<I> {
     }
 
     pub fn advance(&mut self) -> Option<char> {
+        self.offset += 1;
         match self.peeked {
             None => self.input.next(),
             Some(c) => {
@@ -107,7 +102,15 @@ impl<I: Iterator<Item = char>> Scanner<I> {
         }
     }
 
+    pub fn position(&self) -> Position {
+        Position {
+            line: self.line,
+            offset: Some(self.offset),
+        }
+    }
+
     pub fn scan_token(&mut self) -> ScanningResult {
+        let from = self.position();
         let c = match self.advance() {
             Some(c) => c,
             None => {
@@ -115,7 +118,10 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             }
         };
 
-        let tok = |t| Ok(ScanningProduct::Token(t));
+        let tok = |t| {
+            let to = self.position();
+            Ok(ScanningProduct::Token(Spanned::new(t, from, to)))
+        };
 
         match c {
             '(' => tok(Token::LeftParen),
@@ -136,12 +142,19 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             c if c.is_alphabetic() => self.scan_identifier(c),
             c if c.is_numeric() => self.scan_numerics(c),
             c => {
-                panic!("bad input {:?}", c);
+                return Err(ScanningError::UnexpectedCharacter(Spanned::new(
+                    c,
+                    from,
+                    self.position(),
+                )))
             }
         }
     }
 
     pub fn scan_identifier(&mut self, begin: char) -> ScanningResult {
+        let mut from = self.position();
+        from.offset = from.offset.map(|v| v - 1);
+
         let mut ident = String::new();
         ident.push(begin);
         while self.peek().unwrap().is_alphanumeric() {
@@ -152,7 +165,7 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             match self.peek() {
                 Some(c) if c.is_alphanumeric() => ident.push(self.advance().unwrap()),
                 None => {
-                    return Err(());
+                    return Err(ScanningError::UnexpectedEndOfFile);
                 }
                 _ => {
                     break;
@@ -160,13 +173,18 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             }
         }
 
+        let to = self.position();
+
         Ok(match self.keyword(&ident) {
-            Some(k) => ScanningProduct::Token(k),
-            None => ScanningProduct::Token(Token::Identifier(ident)),
+            Some(k) => ScanningProduct::Token(Spanned::new(k, from, to)),
+            None => ScanningProduct::Token(Spanned::new(Token::Identifier(ident), from, to)),
         })
     }
 
     pub fn scan_numerics(&mut self, begin: char) -> ScanningResult {
+        let mut from = self.position();
+        from.offset = from.offset.map(|v| v - 1);
+
         let mut text = String::new();
         text.push(begin);
 
@@ -179,15 +197,25 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             while self.peek().unwrap().is_numeric() {
                 text.push(self.advance().unwrap());
             }
+            let to = self.position();
 
             match text.parse::<f64>() {
-                Ok(f) => Ok(ScanningProduct::Token(Token::FloatLiteral(f))),
-                Err(_) => Err(()),
+                Ok(f) => Ok(ScanningProduct::Token(Spanned::new(
+                    Token::FloatLiteral(f),
+                    from,
+                    to,
+                ))),
+                Err(_) => Err(ScanningError::InvalidLiteral(Spanned::new((), from, to))),
             }
         } else {
+            let to = self.position();
             match text.parse::<i64>() {
-                Ok(i) => Ok(ScanningProduct::Token(Token::IntegerLiteral(i))),
-                Err(_) => Err(()),
+                Ok(i) => Ok(ScanningProduct::Token(Spanned::new(
+                    Token::IntegerLiteral(i),
+                    from,
+                    to,
+                ))),
+                Err(_) => Err(ScanningError::InvalidLiteral(Spanned::new((), from, to))),
             }
         }
     }

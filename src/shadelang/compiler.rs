@@ -1,8 +1,12 @@
 use crate::shadelang::ast::*;
 
+pub mod constant_folding;
+
 pub static mut COUNTER: i32 = 0;
 
-pub fn compile(ast: Program) -> VMProgram {
+pub fn compile(mut ast: Program) -> VMProgram {
+    constant_folding::fold(&mut ast).unwrap();
+
     codegen(ast)
 }
 
@@ -10,68 +14,65 @@ pub fn codegen(ast: Program) -> VMProgram {
     let mut program = VMProgram::new();
     let mut static_section = 0;
 
-    for d in ast.declarations.iter() {
-        match d {
-            TopLevelDeclaration::FunctionDeclaration(f) => {
-                let mut func_meta = FuncMeta::new(program.code.len());
-                let mut has_return = false;
-                let mut stack_offset = 0;
+    for o in ast.out_parameters.iter() {
+        program.data.global_symbols.insert(
+            o.ident.item.clone(),
+            SymbolMeta {
+                offset: static_section,
+                type_kind: *o.type_kind,
+                is_static: true,
+            },
+        );
 
-                for s in f.statements.iter() {
-                    match s {
-                        Statement::Assignment(i, expr) => {
-                            generate_expr(&mut program, &ast, &func_meta, expr);
+        static_section += 4;
+    }
 
-                            if let Some(o) = program.data.global_symbols.get(i) {
-                                program.code.push(MemoryCell::with_data(
-                                    OpCode::Mov4Global,
-                                    o.offset as u16,
-                                ));
-                            } else {
-                                func_meta.symbols.insert(
-                                    i.clone(),
-                                    SymbolMeta {
-                                        offset: stack_offset,
-                                        is_static: false,
-                                        type_kind: TypeKind::F32,
-                                    },
-                                );
-                                stack_offset += 4;
-                            }
-                        }
-                        Statement::Return(expr) => {
-                            generate_expr(&mut program, &ast, &func_meta, expr);
-                            program
-                                .code
-                                .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
-                            has_return = true;
-                        }
+    for f in ast.functions.iter() {
+        let mut func_meta = FuncMeta::new(program.code.len());
+        let mut has_return = false;
+        let mut stack_offset = 0;
+
+        for s in f.statements.iter() {
+            match s {
+                Statement::Assignment(i, expr) => {
+                    generate_expr(&mut program, &ast, &func_meta, &expr);
+
+                    if let Some(o) = program.data.global_symbols.get(&i.item) {
+                        program
+                            .code
+                            .push(MemoryCell::with_data(OpCode::Mov4Global, o.offset as u16));
+                    } else {
+                        func_meta.symbols.insert(
+                            i.item.clone(),
+                            SymbolMeta {
+                                offset: stack_offset,
+                                is_static: false,
+                                type_kind: TypeKind::F32,
+                            },
+                        );
+                        stack_offset += 4;
                     }
                 }
-
-                if !has_return {
-                    program.code.push(MemoryCell::plain_inst(OpCode::Void));
+                Statement::Return(expr) => {
+                    generate_expr(&mut program, &ast, &func_meta, &expr);
                     program
                         .code
                         .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
+                    has_return = true;
                 }
-
-                program.data.functions.insert(f.ident.clone(), func_meta);
             }
-            TopLevelDeclaration::OutParameterDeclaration(tk, id) => {
-                program.data.global_symbols.insert(
-                    id.clone(),
-                    SymbolMeta {
-                        offset: static_section,
-                        type_kind: *tk,
-                        is_static: true,
-                    },
-                );
-
-                static_section += 4;
-            }
-            _ => unimplemented!(),
         }
+        if !has_return {
+            program.code.push(MemoryCell::plain_inst(OpCode::Void));
+            program
+                .code
+                .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
+        }
+
+        program
+            .data
+            .functions
+            .insert(f.ident.item.clone(), func_meta);
     }
 
     program.data.static_section_size = static_section;
@@ -95,18 +96,18 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
             program.code.push(MemoryCell::plain_inst(inst));
         }
         Expr::FuncCall(id, _args) => {
-            let offset = program.data.functions.get(id).unwrap().address;
+            let offset = program.data.functions.get(&id.item).unwrap().address;
 
             program
                 .code
                 .push(MemoryCell::with_data(OpCode::Call, offset as u16));
         }
-        Expr::Literal(l) => match l {
+        Expr::Literal(l) => match l.item {
             Literal::DecimalLiteral(f) => {
                 program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
                 program
                     .code
-                    .push(MemoryCell::raw(unsafe { std::mem::transmute(*f as f32) }));
+                    .push(MemoryCell::raw(unsafe { std::mem::transmute(f as f32) }));
             }
             _ => unimplemented!(),
         },

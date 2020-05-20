@@ -164,12 +164,7 @@ where
     }
 }
 
-
-
 fn main() {
-    test_parser_basic();
-    return;
-
     let im_dims = (800, 600);
 
     let mut events_loop = glutin::event_loop::EventLoop::new();

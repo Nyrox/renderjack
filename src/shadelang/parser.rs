@@ -11,56 +11,55 @@ pub fn parse(input: impl AsRef<str>) -> Program {
 
     let mut tokens = tokens.into_iter().peekable();
 
-    let declarations = parse_declarations(&mut tokens).unwrap();
-
-    Program {
-        declarations: declarations,
-    }
+    parse_program(&mut tokens).unwrap()
 }
+
+type ItemType = Spanned<Token>;
 
 #[derive(Debug, Clone)]
 pub enum ParsingError {
-    UnexpectedToken(Token),
+    UnexpectedToken(ItemType),
     UnexpectedEndOfInput,
 }
 
 type ParsingResult<T> = Result<T, ParsingError>;
 
 pub trait TokenSource {
-    fn next(&mut self) -> Option<Token>;
-    fn peek(&mut self) -> Option<&Token>;
+    fn next(&mut self) -> Option<ItemType>;
+    fn peek(&mut self) -> Option<&ItemType>;
 
-    fn expect_next(&mut self) -> ParsingResult<Token> {
+    fn expect_next(&mut self) -> ParsingResult<ItemType> {
         match TokenSource::next(self) {
             None => Err(ParsingError::UnexpectedEndOfInput),
             Some(t) => Ok(t),
         }
     }
 
-    fn expect_token(&mut self, token: Token) -> ParsingResult<Token> {
+    fn expect_token(&mut self, token: Token) -> ParsingResult<ItemType> {
         match TokenSource::expect_next(self)? {
-            t if t == token => Ok(token),
+            t if *t == token => Ok(t),
             t => Err(ParsingError::UnexpectedToken(t)),
         }
     }
 
-    fn expect_identifier(&mut self) -> ParsingResult<String> {
-        match TokenSource::expect_next(self)? {
-            Token::Identifier(s) => Ok(s),
-            t => Err(ParsingError::UnexpectedToken(t)),
+    fn expect_identifier(&mut self) -> ParsingResult<Spanned<String>> {
+        let token = TokenSource::expect_next(self)?;
+        match token.item {
+            Token::Identifier(s) => Ok(Spanned::new(s, token.from, token.to)),
+            _ => Err(ParsingError::UnexpectedToken(token)),
         }
     }
 }
 
 impl<T> TokenSource for Peekable<T>
 where
-    T: Iterator<Item = Token>,
+    T: Iterator<Item = ItemType>,
 {
-    fn next(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<ItemType> {
         std::iter::Iterator::next(self)
     }
 
-    fn peek(&mut self) -> Option<&Token> {
+    fn peek(&mut self) -> Option<&ItemType> {
         self.peek()
     }
 }
@@ -75,30 +74,34 @@ pub fn get_typekind(t: &Token) -> Option<TypeKind> {
     })
 }
 
-pub fn parse_declarations(
-    tokens: &mut impl TokenSource,
-) -> ParsingResult<Vec<TopLevelDeclaration>> {
-    let mut declarations = vec![];
+pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
+    let mut program = Program::new();
 
     'parsing: loop {
-        match tokens.next() {
+        let token = tokens.next();
+        if token.is_none() {
+            break 'parsing;
+        }
+        let token = token.unwrap();
+
+        match &token.item {
             // Out Specifiers
-            Some(Token::Out) => {
+            Token::Out => {
                 let type_kind = match tokens.expect_next()? {
-                    Token::Float => TypeKind::F32,
+                    t if t.item == Token::Float => t.map(|_| TypeKind::F32),
                     t => {
                         return Err(ParsingError::UnexpectedToken(t));
                     }
                 };
 
                 let ident = tokens.expect_identifier()?;
-                declarations.push(TopLevelDeclaration::OutParameterDeclaration(
-                    type_kind, ident,
-                ));
+                program
+                    .out_parameters
+                    .push(OutParameterDeclaration { type_kind, ident });
                 continue;
             }
             // func declarations
-            Some(t) if get_typekind(&t).is_some() => {
+            t if get_typekind(&t).is_some() => {
                 let _tk = get_typekind(&t).unwrap();
                 let ident = tokens.expect_identifier()?;
 
@@ -111,46 +114,46 @@ pub fn parse_declarations(
 
                 let statements = parse_statements(tokens)?;
 
-                declarations.push(TopLevelDeclaration::FunctionDeclaration(
-                    FunctionDeclaration {
-                        ident,
-                        param_types: vec![],
-                        statements,
-                    },
-                ))
+                program.functions.push(FunctionDeclaration {
+                    ident,
+                    param_types: vec![],
+                    statements,
+                });
             }
-
-            None => {
-                break 'parsing;
-            }
-            Some(t) => {
-                return Err(ParsingError::UnexpectedToken(t));
+            _ => {
+                return Err(ParsingError::UnexpectedToken(token));
             }
         }
     }
 
-    Ok(declarations)
+    Ok(program)
 }
 
 pub fn parse_statements(tokens: &mut impl TokenSource) -> ParsingResult<Vec<Statement>> {
     let mut output = Vec::new();
 
     'parsing: loop {
-        match tokens.next() {
-            Some(Token::Return) => {
+        let token = tokens.next();
+        if token.is_none() {
+            break 'parsing;
+        }
+        let token = token.unwrap();
+
+        match &token.item {
+            Token::Return => {
                 output.push(Statement::Return(parse_expr_bp(tokens, 0)?));
             }
-            Some(Token::Identifier(s)) => {
+            Token::Identifier(s) => {
                 tokens.expect_token(Token::Equals)?;
 
-                output.push(Statement::Assignment(s, parse_expr_bp(tokens, 0)?));
+                output.push(Statement::Assignment(
+                    token.map(|_| s.clone()),
+                    parse_expr_bp(tokens, 0)?,
+                ));
             }
-            Some(Token::RightBrace) => break 'parsing,
-            None => {
-                break 'parsing;
-            }
-            Some(t) => {
-                return Err(ParsingError::UnexpectedToken(t));
+            Token::RightBrace => break 'parsing,
+            _ => {
+                return Err(ParsingError::UnexpectedToken(token));
             }
         }
     }
@@ -178,19 +181,20 @@ pub fn infix_binding_power(op: BinaryOperator) -> (u8, u8) {
 }
 
 pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<Expr> {
-    let mut lhs = match lexer.expect_next()? {
-        Token::FloatLiteral(f) => Expr::Literal(Literal::DecimalLiteral(f)),
-        Token::IntegerLiteral(i) => Expr::Literal(Literal::IntegerLiteral(i)),
+    let token = lexer.expect_next()?;
+    let mut lhs = match &token.item {
+        Token::FloatLiteral(f) => Expr::Literal(token.map(|_| Literal::DecimalLiteral(*f))),
+        Token::IntegerLiteral(i) => Expr::Literal(token.map(|_| Literal::IntegerLiteral(*i))),
         Token::Identifier(i) => match lexer.peek() {
-            Some(Token::LeftParen) => {
+            Some(t) if t.item == Token::LeftParen => {
                 lexer.next();
                 lexer.expect_token(Token::RightParen)?;
 
-                Expr::FuncCall(i, vec![])
+                Expr::FuncCall(token.map(|_| i.clone()), vec![])
             }
-            _ => Expr::Symbol(Symbol { ident: i }),
+            _ => Expr::Symbol(Symbol { ident: i.clone() }),
         },
-        t => return Err(ParsingError::UnexpectedToken(t)),
+        t => return Err(ParsingError::UnexpectedToken(token)),
     };
 
     loop {
