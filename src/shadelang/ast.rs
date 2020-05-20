@@ -183,13 +183,11 @@ pub struct InParameterDeclaration {
     pub ident: Spanned<Ident>,
 }
 
-
 impl Visitable for InParameterDeclaration {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
         Ok(())
     }
 }
-
 
 #[derive(Clone, Debug)]
 pub struct OutParameterDeclaration {

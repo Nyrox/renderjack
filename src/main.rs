@@ -279,7 +279,6 @@ fn main() {
     shader.compile().unwrap();
     shader.bind();
 
-    
     let shadelang_shader = {
         let src = read_file_contents("res/shaders/shadelang/basic.sl");
 
@@ -288,7 +287,6 @@ fn main() {
         program
     };
     let mut shadelang_vm = shadelang::vm::VirtualMachine::new(&shadelang_shader);
-
 
     let viewport = Viewport {
         x: 0,

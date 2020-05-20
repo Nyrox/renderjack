@@ -195,14 +195,14 @@ pub fn infix_binding_power(op: BinaryOperator) -> (u8, u8) {
 pub fn get_prefix_operator(t: &Token) -> Option<UnaryOperator> {
     match t {
         Token::Minus => Some(UnaryOperator::Sub),
-        _ => unimplemented!()
+        _ => unimplemented!(),
     }
 }
 
 pub fn prefix_binding_power(op: UnaryOperator) -> ((), u8) {
     match op {
         UnaryOperator::Sub => ((), 5),
-        _ => unimplemented!()
+        _ => unimplemented!(),
     }
 }
 

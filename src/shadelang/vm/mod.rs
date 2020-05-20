@@ -27,9 +27,7 @@ impl<'a> VirtualMachine<'a> {
     pub fn get_out_float(&mut self, ident: &str) -> f32 {
         let offset = self.program.data.global_symbols.get(ident).unwrap().offset;
 
-        unsafe {
-            self.load_stack(offset)
-        }
+        unsafe { self.load_stack(offset) }
     }
 
     pub fn run_fn(&mut self, id: &str) {
@@ -86,7 +84,7 @@ impl<'a> VirtualMachine<'a> {
                 OpCode::Load4Global => unsafe {
                     let val = self.load_stack::<u32>(p as usize);
                     self.push_stack_raw(std::mem::transmute(val));
-                }
+                },
                 OpCode::Void => self.push_stack_raw(0),
                 OpCode::Ret => {
                     if depth == 0 {

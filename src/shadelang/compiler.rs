@@ -21,7 +21,7 @@ pub fn codegen(ast: Program) -> VMProgram {
                 offset: static_section,
                 type_kind: *i.type_kind,
                 is_static: true,
-            }
+            },
         );
 
         static_section += 4;
@@ -129,28 +129,27 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                 program
                     .code
                     .push(MemoryCell::with_data(OpCode::Load4, symbol.offset as u16));
-            }
-            else if let Some(symbol) = program.data.global_symbols.get(&s.ident) {
-                program.code.push(MemoryCell::with_data(OpCode::Load4Global, symbol.offset as u16));
-            }
-            else {
+            } else if let Some(symbol) = program.data.global_symbols.get(&s.ident) {
+                program.code.push(MemoryCell::with_data(
+                    OpCode::Load4Global,
+                    symbol.offset as u16,
+                ));
+            } else {
                 panic!("Unknown symbol: {:?}", s);
             }
         }
-        Expr::UnaryOp(op, rhs) => {
-            match op {
-                UnaryOperator::Sub => {
-                    generate_expr(program, ast, fnc, rhs);
-                    program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
-                    program
-                        .code
-                        .push(MemoryCell::raw(unsafe { std::mem::transmute(-1.0 as f32) }));
+        Expr::UnaryOp(op, rhs) => match op {
+            UnaryOperator::Sub => {
+                generate_expr(program, ast, fnc, rhs);
+                program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
+                program
+                    .code
+                    .push(MemoryCell::raw(unsafe { std::mem::transmute(-1.0 as f32) }));
 
-                    program.code.push(MemoryCell::plain_inst(OpCode::MulF32));
-                },
-                _ => unimplemented!()
+                program.code.push(MemoryCell::plain_inst(OpCode::MulF32));
             }
-        }
+            _ => unimplemented!(),
+        },
         _ => {
             dbg!(expr);
             unimplemented!();

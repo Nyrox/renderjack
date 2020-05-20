@@ -8,8 +8,6 @@ out float cr
 out float cg
 out float cb
 
-
-
 void main() {
     lx = -0.5
     ly = 1.0
