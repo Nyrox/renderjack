@@ -266,18 +266,29 @@ fn main() {
     let shader = shader::Shader::new();
     shader
         .attach(
-            &read_file_contents("res/shaders/basic.vs"),
+            &read_file_contents("res/shaders/glsl/basic.vs"),
             gl::VERTEX_SHADER,
         )
         .unwrap();
     shader
         .attach(
-            &read_file_contents("res/shaders/basic.fs"),
+            &read_file_contents("res/shaders/glsl/basic.fs"),
             gl::FRAGMENT_SHADER,
         )
         .unwrap();
     shader.compile().unwrap();
     shader.bind();
+
+    
+    let shadelang_shader = {
+        let src = read_file_contents("res/shaders/shadelang/basic.sl");
+
+        let program = shadelang::parser::parse(&src);
+        let program = shadelang::compiler::compile(program);
+        program
+    };
+    let mut shadelang_vm = shadelang::vm::VirtualMachine::new(&shadelang_shader);
+
 
     let viewport = Viewport {
         x: 0,
@@ -306,7 +317,6 @@ fn main() {
             p.y = p.y / p.w;
             p.z = p.z / p.w;
         }
-        println!("{:?}", t1_ndc);
 
         let t1_ndc: Vec<_> = t1_ndc.iter().map(|v| Vector4::truncate(*v)).collect();
 
@@ -350,14 +360,22 @@ fn main() {
                 + (tri.2.normal / t1_wnd.2.z) * w2 * d;
 
             if d < depth[i as usize] {
-                let cosa = n.dot(Vector3::new(-0.5, 1.0, -1.0)).max(0.0);
-                let color = Vector3::new(1.0, 0.5, 0.5);
-                let out = color * cosa;
+                shadelang_vm.set_in_float("nx", n.x);
+                shadelang_vm.set_in_float("ny", n.y);
+                shadelang_vm.set_in_float("nz", n.z);
+
+                shadelang_vm.run_fn("main");
+
+                let cr = shadelang_vm.get_out_float("cr");
+                let cg = shadelang_vm.get_out_float("cg");
+                let cb = shadelang_vm.get_out_float("cb");
+
+                let color = Vector3::new(cr, cg, cb);
 
                 *(imgbuf.get_pixel_mut(x, im_dims.1 - (y + 1))) = image::Rgb([
-                    (out.x * 255.0) as u8,
-                    (out.y * 255.0) as u8,
-                    (out.z * 255.0) as u8,
+                    (color.x * 255.0) as u8,
+                    (color.y * 255.0) as u8,
+                    (color.z * 255.0) as u8,
                 ]);
                 depth[i as usize] = d;
             }
@@ -404,7 +422,6 @@ fn main() {
 fn test_parser_basic() {
     let ast = shadelang::parser::parse(
         r"
-
 out float a
 
 float computeA() {
@@ -422,8 +439,6 @@ void main() {
     b = c * 5.0
     a = b
 }
-
-
     ",
     );
 

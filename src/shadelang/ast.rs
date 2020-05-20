@@ -178,6 +178,20 @@ impl Visitable for FunctionDeclaration {
 }
 
 #[derive(Clone, Debug)]
+pub struct InParameterDeclaration {
+    pub type_kind: Spanned<TypeKind>,
+    pub ident: Spanned<Ident>,
+}
+
+
+impl Visitable for InParameterDeclaration {
+    fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
+        Ok(())
+    }
+}
+
+
+#[derive(Clone, Debug)]
 pub struct OutParameterDeclaration {
     pub type_kind: Spanned<TypeKind>,
     pub ident: Spanned<Ident>,
@@ -193,6 +207,7 @@ impl Visitable for OutParameterDeclaration {
 pub struct Program {
     pub functions: Vec<FunctionDeclaration>,
     pub out_parameters: Vec<OutParameterDeclaration>,
+    pub in_parameters: Vec<InParameterDeclaration>,
 }
 
 impl Program {
@@ -200,6 +215,7 @@ impl Program {
         Program {
             functions: Vec::new(),
             out_parameters: Vec::new(),
+            in_parameters: Vec::new(),
         }
     }
 
@@ -211,6 +227,7 @@ impl Program {
 impl Visitable for Program {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
         (|| {
+            self.in_parameters.visit(v)?;
             self.out_parameters.visit(v)?;
             self.functions.visit(v)
         })()?;

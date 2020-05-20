@@ -7,8 +7,6 @@ use std::iter::Peekable;
 pub fn parse(input: impl AsRef<str>) -> Program {
     let tokens = Scanner::new(input.as_ref().chars()).scan_all().unwrap();
 
-    println!("{:#?}", tokens);
-
     let mut tokens = tokens.into_iter().peekable();
 
     parse_program(&mut tokens).unwrap()
@@ -100,6 +98,20 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
                     .push(OutParameterDeclaration { type_kind, ident });
                 continue;
             }
+            Token::In => {
+                let type_kind = match tokens.expect_next()? {
+                    t if t.item == Token::Float => t.map(|_| TypeKind::F32),
+                    t => {
+                        return Err(ParsingError::UnexpectedToken(t));
+                    }
+                };
+
+                let ident = tokens.expect_identifier()?;
+                program
+                    .in_parameters
+                    .push(InParameterDeclaration { type_kind, ident });
+                continue;
+            }
             // func declarations
             t if get_typekind(&t).is_some() => {
                 let _tk = get_typekind(&t).unwrap();
@@ -180,6 +192,20 @@ pub fn infix_binding_power(op: BinaryOperator) -> (u8, u8) {
     }
 }
 
+pub fn get_prefix_operator(t: &Token) -> Option<UnaryOperator> {
+    match t {
+        Token::Minus => Some(UnaryOperator::Sub),
+        _ => unimplemented!()
+    }
+}
+
+pub fn prefix_binding_power(op: UnaryOperator) -> ((), u8) {
+    match op {
+        UnaryOperator::Sub => ((), 5),
+        _ => unimplemented!()
+    }
+}
+
 pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<Expr> {
     let token = lexer.expect_next()?;
     let mut lhs = match &token.item {
@@ -194,6 +220,13 @@ pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<
             }
             _ => Expr::Symbol(Symbol { ident: i.clone() }),
         },
+        t if get_prefix_operator(t).is_some() => {
+            let op = get_prefix_operator(t).unwrap();
+            let ((), r_bp) = prefix_binding_power(op);
+
+            let rhs = parse_expr_bp(lexer, r_bp)?;
+            Expr::UnaryOp(op, Box::new(rhs))
+        }
         t => return Err(ParsingError::UnexpectedToken(token)),
     };
 

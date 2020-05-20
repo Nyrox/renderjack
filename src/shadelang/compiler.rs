@@ -14,6 +14,19 @@ pub fn codegen(ast: Program) -> VMProgram {
     let mut program = VMProgram::new();
     let mut static_section = 0;
 
+    for i in ast.in_parameters.iter() {
+        program.data.global_symbols.insert(
+            i.ident.item.clone(),
+            SymbolMeta {
+                offset: static_section,
+                type_kind: *i.type_kind,
+                is_static: true,
+            }
+        );
+
+        static_section += 4;
+    }
+
     for o in ast.out_parameters.iter() {
         program.data.global_symbols.insert(
             o.ident.item.clone(),
@@ -112,10 +125,31 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
             _ => unimplemented!(),
         },
         Expr::Symbol(s) => {
-            let offset = fnc.symbols.get(&s.ident).unwrap().offset;
-            program
-                .code
-                .push(MemoryCell::with_data(OpCode::Load4, offset as u16));
+            if let Some(symbol) = fnc.symbols.get(&s.ident) {
+                program
+                    .code
+                    .push(MemoryCell::with_data(OpCode::Load4, symbol.offset as u16));
+            }
+            else if let Some(symbol) = program.data.global_symbols.get(&s.ident) {
+                program.code.push(MemoryCell::with_data(OpCode::Load4Global, symbol.offset as u16));
+            }
+            else {
+                panic!("Unknown symbol: {:?}", s);
+            }
+        }
+        Expr::UnaryOp(op, rhs) => {
+            match op {
+                UnaryOperator::Sub => {
+                    generate_expr(program, ast, fnc, rhs);
+                    program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
+                    program
+                        .code
+                        .push(MemoryCell::raw(unsafe { std::mem::transmute(-1.0 as f32) }));
+
+                    program.code.push(MemoryCell::plain_inst(OpCode::MulF32));
+                },
+                _ => unimplemented!()
+            }
         }
         _ => {
             dbg!(expr);
@@ -154,9 +188,9 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct SymbolMeta {
-    offset: usize,
-    is_static: bool,
-    type_kind: TypeKind,
+    pub offset: usize,
+    pub is_static: bool,
+    pub type_kind: TypeKind,
 }
 
 #[derive(Debug, Clone)]

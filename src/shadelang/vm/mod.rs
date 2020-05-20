@@ -16,6 +16,22 @@ impl<'a> VirtualMachine<'a> {
         }
     }
 
+    pub fn set_in_float(&mut self, ident: &str, val: f32) {
+        let offset = self.program.data.global_symbols.get(ident).unwrap().offset;
+
+        unsafe {
+            self.write_stack(offset, val);
+        }
+    }
+
+    pub fn get_out_float(&mut self, ident: &str) -> f32 {
+        let offset = self.program.data.global_symbols.get(ident).unwrap().offset;
+
+        unsafe {
+            self.load_stack(offset)
+        }
+    }
+
     pub fn run_fn(&mut self, id: &str) {
         let fnc = self.program.data.functions.get(id).unwrap();
         self.isp = fnc.address;
@@ -29,7 +45,6 @@ impl<'a> VirtualMachine<'a> {
 
         loop {
             let (op, p) = self.program.code[self.isp].get_inst();
-            dbg!(op);
             self.isp = self.isp + 1;
 
             match op {
@@ -65,19 +80,15 @@ impl<'a> VirtualMachine<'a> {
                     self.write_stack(p as usize, val);
                 },
                 OpCode::Load4 => unsafe {
-                    println!(
-                        "{:?}",
-                        bytemuck::cast_slice::<_, f32>(self.stack.as_slice())
-                    );
-                    dbg!(stack_base, p);
                     let val = self.load_stack::<u32>(stack_base + p as usize);
-                    dbg!(std::mem::transmute::<_, f32>(val));
                     self.push_stack_raw(std::mem::transmute(val));
                 },
+                OpCode::Load4Global => unsafe {
+                    let val = self.load_stack::<u32>(p as usize);
+                    self.push_stack_raw(std::mem::transmute(val));
+                }
                 OpCode::Void => self.push_stack_raw(0),
                 OpCode::Ret => {
-                    dbg!(depth);
-                    dbg!(self.stack.len());
                     if depth == 0 {
                         // we are done
                         return;
@@ -85,13 +96,11 @@ impl<'a> VirtualMachine<'a> {
                     depth -= 1;
                     let reta = unsafe {
                         let rv = self.pop_stack::<u32>();
-                        dbg!(std::mem::transmute::<_, f32>(rv));
                         for _ in 0..p {
                             self.pop_stack::<u8>();
                         }
                         let sb = self.pop_stack::<u32>();
                         stack_base = sb as usize;
-                        dbg!(stack_base);
 
                         let ra = self.pop_stack::<u32>();
                         self.push_stack_raw(rv);
@@ -105,8 +114,6 @@ impl<'a> VirtualMachine<'a> {
     }
 
     pub unsafe fn write_stack<T: Copy + std::fmt::Debug>(&mut self, offset: usize, val: T) {
-        dbg!(val);
-
         let ptr = self.stack.as_mut_ptr().offset(offset as isize) as *mut T;
 
         *ptr = val;
@@ -114,8 +121,6 @@ impl<'a> VirtualMachine<'a> {
 
     pub unsafe fn load_stack<T: Copy + std::fmt::Debug>(&mut self, offset: usize) -> T {
         let ptr = self.stack.as_ptr().offset(offset as isize) as *const T;
-        dbg!(*ptr);
-
         *ptr
     }
 
@@ -132,8 +137,6 @@ impl<'a> VirtualMachine<'a> {
             .as_ptr()
             .offset((self.stack.len() - mem::size_of::<T>()) as isize);
         let v = *(ptr as *const T);
-
-        dbg!(v);
 
         let _ = self.stack.split_off(self.stack.len() - mem::size_of::<T>());
         v

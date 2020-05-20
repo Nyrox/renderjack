@@ -3,6 +3,8 @@ use crate::shadelang::ast::{Position, Spanned};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Out,
+    In,
+    
     Float,
     LeftParen,
     RightParen,
@@ -95,6 +97,7 @@ impl<I: Iterator<Item = char>> Scanner<I> {
     pub fn keyword(&self, what: &str) -> Option<Token> {
         match what.to_owned().to_lowercase().as_str() {
             "out" => Some(Token::Out),
+            "in" => Some(Token::In),
             "float" => Some(Token::Float),
             "void" => Some(Token::Void),
             "return" => Some(Token::Return),
@@ -157,13 +160,10 @@ impl<I: Iterator<Item = char>> Scanner<I> {
 
         let mut ident = String::new();
         ident.push(begin);
-        while self.peek().unwrap().is_alphanumeric() {
-            ident.push(self.advance().unwrap());
-        }
 
         loop {
             match self.peek() {
-                Some(c) if c.is_alphanumeric() => ident.push(self.advance().unwrap()),
+                Some(c) if c.is_alphanumeric() || c == '_'  => ident.push(self.advance().unwrap()),
                 None => {
                     return Err(ScanningError::UnexpectedEndOfFile);
                 }
