@@ -1,0 +1,277 @@
+Program {
+    functions: [
+        FunctionDeclaration {
+            ident: Spanned {
+                item: "main",
+                from: Position {
+                    line: 6,
+                    offset: Some(
+                        5,
+                    ),
+                },
+                to: Position {
+                    line: 6,
+                    offset: Some(
+                        9,
+                    ),
+                },
+            },
+            param_types: [],
+            statements: [
+                Assignment(
+                    Spanned {
+                        item: "L",
+                        from: Position {
+                            line: 7,
+                            offset: Some(
+                                4,
+                            ),
+                        },
+                        to: Position {
+                            line: 7,
+                            offset: Some(
+                                5,
+                            ),
+                        },
+                    },
+                    FuncCall(
+                        (
+                            Spanned { item: "normalize", from: Position { line: 7, offset: Some(8) }, to: Position { line: 7, offset: Some(17) } },
+                            [
+                                FuncCall(
+                                    (
+                                        Spanned { item: "Vec3", from: Position { line: 7, offset: Some(18) }, to: Position { line: 7, offset: Some(22) } },
+                                        [
+                                            UnaryOp(
+                                                Sub,
+                                                Literal(
+                                                    Spanned {
+                                                        item: DecimalLiteral(
+                                                            0.5,
+                                                        ),
+                                                        from: Position {
+                                                            line: 7,
+                                                            offset: Some(
+                                                                24,
+                                                            ),
+                                                        },
+                                                        to: Position {
+                                                            line: 7,
+                                                            offset: Some(
+                                                                27,
+                                                            ),
+                                                        },
+                                                    },
+                                                ),
+                                            ),
+                                            Literal(
+                                                Spanned {
+                                                    item: DecimalLiteral(
+                                                        1.0,
+                                                    ),
+                                                    from: Position {
+                                                        line: 7,
+                                                        offset: Some(
+                                                            29,
+                                                        ),
+                                                    },
+                                                    to: Position {
+                                                        line: 7,
+                                                        offset: Some(
+                                                            32,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
+                                            UnaryOp(
+                                                Sub,
+                                                Literal(
+                                                    Spanned {
+                                                        item: DecimalLiteral(
+                                                            1.0,
+                                                        ),
+                                                        from: Position {
+                                                            line: 7,
+                                                            offset: Some(
+                                                                35,
+                                                            ),
+                                                        },
+                                                        to: Position {
+                                                            line: 7,
+                                                            offset: Some(
+                                                                38,
+                                                            ),
+                                                        },
+                                                    },
+                                                ),
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
+                ),
+                Assignment(
+                    Spanned {
+                        item: "C",
+                        from: Position {
+                            line: 8,
+                            offset: Some(
+                                4,
+                            ),
+                        },
+                        to: Position {
+                            line: 8,
+                            offset: Some(
+                                5,
+                            ),
+                        },
+                    },
+                    FuncCall(
+                        (
+                            Spanned { item: "Vec3", from: Position { line: 8, offset: Some(8) }, to: Position { line: 8, offset: Some(12) } },
+                            [
+                                Literal(
+                                    Spanned {
+                                        item: DecimalLiteral(
+                                            1.0,
+                                        ),
+                                        from: Position {
+                                            line: 8,
+                                            offset: Some(
+                                                13,
+                                            ),
+                                        },
+                                        to: Position {
+                                            line: 8,
+                                            offset: Some(
+                                                16,
+                                            ),
+                                        },
+                                    },
+                                ),
+                                Literal(
+                                    Spanned {
+                                        item: DecimalLiteral(
+                                            0.5,
+                                        ),
+                                        from: Position {
+                                            line: 8,
+                                            offset: Some(
+                                                18,
+                                            ),
+                                        },
+                                        to: Position {
+                                            line: 8,
+                                            offset: Some(
+                                                21,
+                                            ),
+                                        },
+                                    },
+                                ),
+                                Literal(
+                                    Spanned {
+                                        item: DecimalLiteral(
+                                            0.5,
+                                        ),
+                                        from: Position {
+                                            line: 8,
+                                            offset: Some(
+                                                23,
+                                            ),
+                                        },
+                                        to: Position {
+                                            line: 8,
+                                            offset: Some(
+                                                26,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
+                        ),
+                    ),
+                ),
+                Assignment(
+                    Spanned {
+                        item: "cos_a",
+                        from: Position {
+                            line: 10,
+                            offset: Some(
+                                4,
+                            ),
+                        },
+                        to: Position {
+                            line: 10,
+                            offset: Some(
+                                9,
+                            ),
+                        },
+                    },
+                    FuncCall(
+                        (
+                            Spanned { item: "dot", from: Position { line: 10, offset: Some(12) }, to: Position { line: 10, offset: Some(15) } },
+                            [
+                                Symbol(
+                                    Spanned { item: "L", from: Position { line: 10, offset: Some(16) }, to: Position { line: 10, offset: Some(17) } },
+                                ),
+                                Symbol(
+                                    Spanned { item: "normal", from: Position { line: 10, offset: Some(19) }, to: Position { line: 10, offset: Some(25) } },
+                                ),
+                            ],
+                        ),
+                    ),
+                ),
+                Return(
+                    BinaryOp(
+                        Mul,
+                        Symbol(
+                            Spanned { item: "cos_a", from: Position { line: 12, offset: Some(11) }, to: Position { line: 12, offset: Some(16) } },
+                        ),
+                        Symbol(
+                            Spanned { item: "C", from: Position { line: 12, offset: Some(19) }, to: Position { line: 12, offset: Some(20) } },
+                        ),
+                    ),
+                ),
+            ],
+        },
+    ],
+    out_parameters: [],
+    in_parameters: [
+        InParameterDeclaration {
+            type_kind: Spanned {
+                item: TypeRef(
+                    "Vec3",
+                ),
+                from: Position {
+                    line: 2,
+                    offset: Some(
+                        3,
+                    ),
+                },
+                to: Position {
+                    line: 2,
+                    offset: Some(
+                        7,
+                    ),
+                },
+            },
+            ident: Spanned {
+                item: "normal",
+                from: Position {
+                    line: 2,
+                    offset: Some(
+                        8,
+                    ),
+                },
+                to: Position {
+                    line: 2,
+                    offset: Some(
+                        14,
+                    ),
+                },
+            },
+        },
+    ],
+}

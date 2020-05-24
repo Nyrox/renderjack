@@ -1,3 +1,6 @@
+#![feature(debug_non_exhaustive)]
+#![feature(vec_drain_as_slice)]
+
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
@@ -281,9 +284,12 @@ fn main() {
 
     let shadelang_shader = {
         let src = read_file_contents("res/shaders/shadelang/basic.sl");
+        std::fs::create_dir_all("debug/shaders/basic/").ok();
 
         let program = shadelang::parser::parse(&src);
+        std::fs::write("debug/shaders/basic/ast.rson", format!("{:#?}", program)).ok();
         let program = shadelang::compiler::compile(program);
+        std::fs::write("debug/shaders/basic/code.ron", format!("{:#?}", program)).ok();
         program
     };
     let mut shadelang_vm = shadelang::vm::VirtualMachine::new(&shadelang_shader);
@@ -358,22 +364,27 @@ fn main() {
                 + (tri.2.normal / t1_wnd.2.z) * w2 * d;
 
             if d < depth[i as usize] {
-                shadelang_vm.set_in_float("nx", n.x);
-                shadelang_vm.set_in_float("ny", n.y);
-                shadelang_vm.set_in_float("nz", n.z);
+                // shadelang_vm.set_in_float("nx", n.x);
+                // shadelang_vm.set_in_float("ny", n.y);
+                // shadelang_vm.set_in_float("nz", n.z);
+
+                shadelang_vm.set_global("normal", [n.x, n.y, n.z]);
 
                 shadelang_vm.run_fn("main");
 
-                let cr = shadelang_vm.get_out_float("cr");
-                let cg = shadelang_vm.get_out_float("cg");
-                let cb = shadelang_vm.get_out_float("cb");
+                let color: [f32; 3] = shadelang_vm.get_global("normal");
+                let color: [f32; 3] = unsafe { shadelang_vm.pop_stack() };
+                // let cr = shadelang_vm.get_out_float("cr");
+                // let cg = shadelang_vm.get_out_float("cg");
+                // let cb = shadelang_vm.get_out_float("cb");
 
-                let color = Vector3::new(cr, cg, cb);
+                // let color = Vector3::new(cr, cg, cb);
+                // let color = Vector3::new(1.0, 0.0, 0.0);
 
                 *(imgbuf.get_pixel_mut(x, im_dims.1 - (y + 1))) = image::Rgb([
-                    (color.x * 255.0) as u8,
-                    (color.y * 255.0) as u8,
-                    (color.z * 255.0) as u8,
+                    (color[0] * 255.0) as u8,
+                    (color[1] * 255.0) as u8,
+                    (color[2] * 255.0) as u8,
                 ]);
                 depth[i as usize] = d;
             }

@@ -12,6 +12,7 @@ pub enum Token {
     RightBrace,
     Equals,
     EqualsEquals,
+    Comma,
 
     Plus,
     Minus,
@@ -20,6 +21,8 @@ pub enum Token {
 
     Void,
     Return,
+
+    Vec3,
 
     Identifier(String),
     FloatLiteral(f64),
@@ -98,8 +101,6 @@ impl<I: Iterator<Item = char>> Scanner<I> {
         match what.to_owned().to_lowercase().as_str() {
             "out" => Some(Token::Out),
             "in" => Some(Token::In),
-            "float" => Some(Token::Float),
-            "void" => Some(Token::Void),
             "return" => Some(Token::Return),
             _ => None,
         }
@@ -136,9 +137,11 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             '+' => tok(Token::Plus),
             '/' => tok(Token::Slash),
             '*' => tok(Token::Star),
+            ',' => tok(Token::Comma),
 
             '\n' => {
                 self.line += 1;
+                self.offset = 0;
                 Ok(ScanningProduct::Skip)
             }
             c if c.is_whitespace() => Ok(ScanningProduct::Skip),

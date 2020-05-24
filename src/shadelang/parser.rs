@@ -66,10 +66,28 @@ pub fn get_typekind(t: &Token) -> Option<TypeKind> {
     Some(match t {
         Token::Float => TypeKind::F32,
         Token::Void => TypeKind::Void,
+        Token::Vec3 => TypeKind::Vec3,
         _ => {
             return None;
         }
     })
+}
+
+pub fn expect_typekind(tokens: &mut impl TokenSource) -> ParsingResult<Spanned<TypeKind>> {
+    let token = tokens.expect_next()?;
+
+    let res = token.map(|t| match t {
+        Token::Float => Ok(TypeKind::F32),
+        Token::Void => Ok(TypeKind::Void),
+        Token::Vec3 => Ok(TypeKind::Vec3),
+        Token::Identifier(i) => Ok(TypeKind::TypeRef(i.clone())),
+        t => Err(ParsingError::UnexpectedToken(token.map(|_| t.clone()))),
+    });
+
+    match res.item {
+        Ok(t) => Ok(token.map(|_| t)),
+        Err(e) => Err(e),
+    }
 }
 
 pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
@@ -85,12 +103,7 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
         match &token.item {
             // Out Specifiers
             Token::Out => {
-                let type_kind = match tokens.expect_next()? {
-                    t if t.item == Token::Float => t.map(|_| TypeKind::F32),
-                    t => {
-                        return Err(ParsingError::UnexpectedToken(t));
-                    }
-                };
+                let type_kind = expect_typekind(tokens)?;
 
                 let ident = tokens.expect_identifier()?;
                 program
@@ -99,12 +112,7 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
                 continue;
             }
             Token::In => {
-                let type_kind = match tokens.expect_next()? {
-                    t if t.item == Token::Float => t.map(|_| TypeKind::F32),
-                    t => {
-                        return Err(ParsingError::UnexpectedToken(t));
-                    }
-                };
+                let type_kind = expect_typekind(tokens)?;
 
                 let ident = tokens.expect_identifier()?;
                 program
@@ -113,8 +121,14 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
                 continue;
             }
             // func declarations
-            t if get_typekind(&t).is_some() => {
-                let _tk = get_typekind(&t).unwrap();
+            t => {
+                let tk = match t {
+                    Token::Identifier(i) => Ok(TypeKind::TypeRef(i.clone())),
+                    t => match get_typekind(&t) {
+                        Some(v) => Ok(v),
+                        None => Err(ParsingError::UnexpectedToken(token)),
+                    },
+                }?;
                 let ident = tokens.expect_identifier()?;
 
                 // arg list
@@ -132,6 +146,7 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
                     statements,
                 });
             }
+
             _ => {
                 return Err(ParsingError::UnexpectedToken(token));
             }
@@ -195,7 +210,7 @@ pub fn infix_binding_power(op: BinaryOperator) -> (u8, u8) {
 pub fn get_prefix_operator(t: &Token) -> Option<UnaryOperator> {
     match t {
         Token::Minus => Some(UnaryOperator::Sub),
-        _ => unimplemented!(),
+        _ => None,
     }
 }
 
@@ -208,18 +223,38 @@ pub fn prefix_binding_power(op: UnaryOperator) -> ((), u8) {
 
 pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<Expr> {
     let token = lexer.expect_next()?;
+    // atoms
     let mut lhs = match &token.item {
         Token::FloatLiteral(f) => Expr::Literal(token.map(|_| Literal::DecimalLiteral(*f))),
         Token::IntegerLiteral(i) => Expr::Literal(token.map(|_| Literal::IntegerLiteral(*i))),
         Token::Identifier(i) => match lexer.peek() {
             Some(t) if t.item == Token::LeftParen => {
                 lexer.next();
-                lexer.expect_token(Token::RightParen)?;
 
-                Expr::FuncCall(token.map(|_| i.clone()), vec![])
+                let mut exprs = Vec::new();
+                loop {
+                    let e = parse_expr_bp(lexer, 0)?;
+                    exprs.push(Box::new(e));
+                    match lexer.expect_next()? {
+                        t if t.item == Token::RightParen => {
+                            break;
+                        }
+                        t if t.item == Token::Comma => {
+                            continue;
+                        }
+                        t => Err(ParsingError::UnexpectedToken(t))?,
+                    }
+                }
+
+                Expr::FuncCall((Reference::unresolved(token.map(|_| i.clone())), exprs))
             }
-            _ => Expr::Symbol(Symbol { ident: i.clone() }),
+            _ => Expr::Symbol(Reference::unresolved(token.map(|_| i.clone()))),
         },
+        Token::LeftParen => {
+            let e = parse_expr_bp(lexer, 0)?;
+            lexer.expect_token(Token::RightParen)?;
+            e
+        }
         t if get_prefix_operator(t).is_some() => {
             let op = get_prefix_operator(t).unwrap();
             let ((), r_bp) = prefix_binding_power(op);

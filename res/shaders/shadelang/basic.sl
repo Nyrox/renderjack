@@ -1,20 +1,11 @@
 
+in Vec3 normal
 
-in float nx
-in float ny
-in float nz
+Vec3 main() {
+    L = normalize(Vec3(-0.5, 1.0, -1.0))
+    C = Vec3(1.0, 0.5, 0.5)
+    
+    cos_a = dot(L, normal)
 
-out float cr
-out float cg
-out float cb
-
-void main() {
-    lx = -0.5
-    ly = 1.0
-    lz = -1.0
-
-    cos_a = lx * nx + ly * ny + lz * nz
-    cr = cos_a * 1.0
-    cg = cos_a * 0.2
-    cb = cos_a * 0.2
+    return cos_a * C
 }

@@ -1,0 +1,183 @@
+VMProgram {
+    code: [
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            16128,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            49024,
+        ),
+        MemoryCell(
+            MulF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            49024,
+        ),
+        MemoryCell(
+            MulF32,
+            0,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            0,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            1,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            16128,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            AddI32,
+            16128,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            0,
+        ),
+        MemoryCell(
+            Load4,
+            0,
+        ),
+        MemoryCell(
+            Load4,
+            4,
+        ),
+        MemoryCell(
+            Load4,
+            8,
+        ),
+        MemoryCell(
+            Load4Global,
+            0,
+        ),
+        MemoryCell(
+            Load4Global,
+            4,
+        ),
+        MemoryCell(
+            Load4Global,
+            8,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            2,
+        ),
+        MemoryCell(
+            Load4,
+            24,
+        ),
+        MemoryCell(
+            Load4,
+            12,
+        ),
+        MemoryCell(
+            Load4,
+            16,
+        ),
+        MemoryCell(
+            Load4,
+            20,
+        ),
+        MemoryCell(
+            MulF32_Vec3,
+            0,
+        ),
+        MemoryCell(
+            Ret,
+            28,
+        ),
+    ],
+    data: ProgramData {
+        functions: {
+            "main": FuncMeta {
+                symbols: {
+                    "cos_a": SymbolMeta {
+                        type_kind: F32,
+                        stack_offset: Some(
+                            24,
+                        ),
+                        is_static: false,
+                    },
+                    "L": SymbolMeta {
+                        type_kind: Vec3,
+                        stack_offset: Some(
+                            0,
+                        ),
+                        is_static: false,
+                    },
+                    "C": SymbolMeta {
+                        type_kind: Vec3,
+                        stack_offset: Some(
+                            12,
+                        ),
+                        is_static: false,
+                    },
+                },
+                address: Some(
+                    0,
+                ),
+            },
+        },
+        global_symbols: {
+            "normal": SymbolMeta {
+                type_kind: Vec3,
+                stack_offset: Some(
+                    0,
+                ),
+                is_static: true,
+            },
+        },
+        min_stack_size: 1036,
+        static_section_size: 12,
+    },
+}

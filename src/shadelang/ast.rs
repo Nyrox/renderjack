@@ -5,7 +5,25 @@ use std::fmt;
 pub type VResult = Result<(), Box<dyn std::error::Error>>;
 
 pub trait Visitor {
+    fn post_in_parameter(&mut self, _T: &mut InParameterDeclaration) -> VResult {
+        Ok(())
+    }
     fn post_expr(&mut self, _t: &mut Expr) -> VResult {
+        Ok(())
+    }
+    fn type_kind(&mut self, _t: &mut TypeKind) -> VResult {
+        Ok(())
+    }
+    fn symbol(&mut self, _t: &mut Symbol) -> VResult {
+        Ok(())
+    }
+    fn function_decl(&mut self, _t: &mut FunctionDeclaration) -> VResult {
+        Ok(())
+    }
+    fn post_statement(&mut self, _t: &mut Statement) -> VResult {
+        Ok(())
+    }
+    fn post_func_call(&mut self, _t: &mut FuncCall) -> VResult {
         Ok(())
     }
 }
@@ -73,9 +91,19 @@ impl<T> Deref for Spanned<T> {
     }
 }
 
+#[derive(Clone)]
 pub struct Reference<T, R> {
-    raw: T,
-    resolved: Option<R>,
+    pub raw: T,
+    pub resolved: Option<R>,
+}
+
+impl<T, R> Reference<T, R> {
+    pub fn unresolved(raw: T) -> Self {
+        Reference {
+            raw,
+            resolved: None,
+        }
+    }
 }
 
 impl<T: fmt::Debug, R: fmt::Debug> fmt::Debug for Reference<T, R> {
@@ -108,40 +136,86 @@ pub enum Literal {
     DecimalLiteral(f64),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum TypeKind {
     Void,
     I32,
     F32,
+    TypeRef(String),
+    Vec3,
 }
 
-#[derive(Clone, Debug)]
-pub struct Symbol {
-    pub ident: Ident,
+impl TypeKind {
+    pub fn size(&self) -> usize {
+        match self {
+            TypeKind::Void => 0,
+            TypeKind::I32 => 4,
+            TypeKind::F32 => 4,
+            TypeKind::Vec3 => 12,
+            _ => unimplemented!("{:?}", self)
+        }
+    }
+}
+
+impl Visitable for TypeKind {
+    fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
+        v.type_kind(self)
+    }
+}
+
+pub type Symbol = Reference<Spanned<Ident>, (Ident, TypeKind)>;
+
+impl Visitable for Symbol {
+    fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
+        v.symbol(self)
+    }
+}
+
+pub type FuncCall = (Reference<Spanned<Ident>, (Ident, TypeKind)>, Vec<Box<Expr>>);
+
+impl Visitable for FuncCall {
+    fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
+        for e in self.1.iter_mut() {
+            e.visit(v)?;
+        }
+        v.post_func_call(self)
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum Expr {
-    FuncCall(Spanned<Ident>, Vec<Box<Expr>>),
+    FuncCall(FuncCall),
     BinaryOp(BinaryOperator, Box<Expr>, Box<Expr>),
     UnaryOp(UnaryOperator, Box<Expr>),
     Literal(Spanned<Literal>),
     Symbol(Symbol),
 }
 
+impl Expr {
+    pub fn get_type(&self) -> Option<TypeKind> {
+        match self {
+            Expr::FuncCall((def, _)) => def.resolved.clone().map(|(_, tk)| tk),
+            Expr::Symbol(s) => s.resolved.clone().map(|(_, tk)| tk),
+            _ => unimplemented!("{:?}", &self),
+        }
+    }
+}
+
 impl Visitable for Expr {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
         match self {
-            Expr::FuncCall(_, params) => {
-                for e in params {
-                    (*e).visit(v)?
+            Expr::FuncCall(func) => {
+                for e in func.1.iter_mut() {
+                    e.visit(v)?
                 }
+                v.post_func_call(func)?;
             }
             Expr::BinaryOp(_, e1, e2) => (|| {
                 e1.visit(v)?;
                 e2.visit(v)
             })()?,
             Expr::UnaryOp(_, e) => e.visit(v)?,
+            Expr::Symbol(s) => s.visit(v)?,
             _ => (),
         }
 
@@ -158,9 +232,11 @@ pub enum Statement {
 impl Visitable for Statement {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
         match self {
-            Statement::Assignment(_, expr) => expr.visit(v),
-            Statement::Return(expr) => expr.visit(v),
+            Statement::Assignment(_, expr) => expr.visit(v)?,
+            Statement::Return(expr) => expr.visit(v)?,
         }
+
+        v.post_statement(self)
     }
 }
 
@@ -173,6 +249,7 @@ pub struct FunctionDeclaration {
 
 impl Visitable for FunctionDeclaration {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
+        v.function_decl(self)?;
         self.statements.visit(v)
     }
 }
@@ -185,7 +262,8 @@ pub struct InParameterDeclaration {
 
 impl Visitable for InParameterDeclaration {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
-        Ok(())
+        self.type_kind.item.visit(v)?;
+        v.post_in_parameter(self)
     }
 }
 
