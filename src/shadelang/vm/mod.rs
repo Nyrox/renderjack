@@ -3,7 +3,7 @@ use std::mem;
 
 use crate::shadelang::ast::*;
 
-use crate::shadelang::compiler::program_data::{ProgramData};
+use crate::shadelang::compiler::program_data::ProgramData;
 
 #[repr(u16)]
 #[derive(Clone, Copy, Debug)]
@@ -115,7 +115,14 @@ impl<'a> VirtualMachine<'a> {
     }
 
     pub fn set_in_float(&mut self, ident: &str, val: f32) {
-        let offset = self.program.data.global_symbols.get(ident).unwrap().stack_offset.unwrap();
+        let offset = self
+            .program
+            .data
+            .global_symbols
+            .get(ident)
+            .unwrap()
+            .stack_offset
+            .unwrap();
 
         unsafe {
             self.write_stack(offset, val);
@@ -123,7 +130,14 @@ impl<'a> VirtualMachine<'a> {
     }
 
     pub fn set_global<T: bytemuck::Pod>(&mut self, ident: &str, val: T) {
-        let offset = self.program.data.global_symbols.get(ident).unwrap().stack_offset.unwrap();
+        let offset = self
+            .program
+            .data
+            .global_symbols
+            .get(ident)
+            .unwrap()
+            .stack_offset
+            .unwrap();
 
         unsafe {
             self.write_stack(offset, val);
@@ -131,13 +145,27 @@ impl<'a> VirtualMachine<'a> {
     }
 
     pub fn get_global<T: bytemuck::Pod>(&mut self, ident: &str) -> T {
-        let offset = self.program.data.global_symbols.get(ident).unwrap().stack_offset.unwrap();
+        let offset = self
+            .program
+            .data
+            .global_symbols
+            .get(ident)
+            .unwrap()
+            .stack_offset
+            .unwrap();
 
         unsafe { self.load_stack(offset) }
     }
 
     pub fn get_out_float(&mut self, ident: &str) -> f32 {
-        let offset = self.program.data.global_symbols.get(ident).unwrap().stack_offset.unwrap();
+        let offset = self
+            .program
+            .data
+            .global_symbols
+            .get(ident)
+            .unwrap()
+            .stack_offset
+            .unwrap();
 
         unsafe { self.load_stack(offset) }
     }
@@ -146,7 +174,6 @@ impl<'a> VirtualMachine<'a> {
         let fnc = self.program.data.functions.get(id).unwrap();
         self.isp = fnc.address.unwrap();
         let mut depth = 0;
-
 
         let mut stack_base = self.stack.len();
 
@@ -174,18 +201,17 @@ impl<'a> VirtualMachine<'a> {
                     let f2 = self.pop_stack::<f32>();
 
                     self.push_stack_raw(std::mem::transmute(f1 * f2));
-
                 },
                 OpCode::MulF32_Vec3 => unsafe {
                     let z = self.pop_stack::<f32>();
                     let y = self.pop_stack::<f32>();
                     let x = self.pop_stack::<f32>();
                     let a = self.pop_stack::<f32>();
-                    
+
                     self.push_stack(a * x);
                     self.push_stack(a * y);
-                    self.push_stack(a * z);                    
-                }
+                    self.push_stack(a * z);
+                },
                 OpCode::AddF32 => unsafe {
                     let f1 = self.pop_stack::<f32>();
                     let f2 = self.pop_stack::<f32>();

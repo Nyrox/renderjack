@@ -4,7 +4,7 @@ use crate::shadelang::vm::*;
 pub mod program_data;
 pub mod resolve_types;
 
-use program_data::{ProgramData, FuncMeta, SymbolMeta};
+use program_data::{FuncMeta, ProgramData, SymbolMeta};
 
 pub static mut COUNTER: i32 = 0;
 
@@ -56,18 +56,23 @@ pub fn codegen(ast: Program, mut data: ProgramData) -> VMProgram {
 
         let mut has_return = false;
         let mut stack_offset = 0;
-        
+
         for s in f.statements.iter() {
             match s {
                 Statement::Assignment(i, expr) => {
                     generate_expr(&mut program, &ast, &func_meta, &expr);
-                    
+
                     if let Some(o) = data.global_symbols.get(&i.item) {
-                        program
-                        .code
-                        .push(MemoryCell::with_data(OpCode::Mov4Global, o.stack_offset.unwrap() as u16));
+                        program.code.push(MemoryCell::with_data(
+                            OpCode::Mov4Global,
+                            o.stack_offset.unwrap() as u16,
+                        ));
                     } else {
-                        func_meta.symbols.get_mut(i.item.as_str()).unwrap().stack_offset = Some(stack_offset);
+                        func_meta
+                            .symbols
+                            .get_mut(i.item.as_str())
+                            .unwrap()
+                            .stack_offset = Some(stack_offset);
                         stack_offset += expr.get_type().unwrap().size();
                     }
                 }
@@ -86,7 +91,6 @@ pub fn codegen(ast: Program, mut data: ProgramData) -> VMProgram {
                 .code
                 .push(MemoryCell::with_data(OpCode::Ret, stack_offset as u16));
         }
-
     }
 
     program.data = data;
@@ -102,7 +106,9 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
             generate_expr(program, ast, fnc, e2);
 
             let inst = match (op, e1.get_type(), e2.get_type()) {
-                (BinaryOperator::Mul, Some(TypeKind::F32), Some(TypeKind::Vec3)) => OpCode::MulF32_Vec3,
+                (BinaryOperator::Mul, Some(TypeKind::F32), Some(TypeKind::Vec3)) => {
+                    OpCode::MulF32_Vec3
+                }
                 (BinaryOperator::Add, _, _) => OpCode::AddF32,
                 (BinaryOperator::Sub, _, _) => OpCode::SubF32,
                 (BinaryOperator::Mul, _, _) => OpCode::MulF32,
@@ -121,9 +127,10 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                     .code
                     .push(MemoryCell::with_data(OpCode::CallBuiltIn, func as u16));
             } else if let Some(func) = program.data.functions.get(id.raw.as_str()) {
-                program
-                    .code
-                    .push(MemoryCell::with_data(OpCode::Call, func.address.unwrap() as u16));
+                program.code.push(MemoryCell::with_data(
+                    OpCode::Call,
+                    func.address.unwrap() as u16,
+                ));
             } else {
                 panic!("Unrecognized function: {:?}", id);
             }
@@ -143,8 +150,7 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                     symbol
                 } else if let Some(symbol) = program.data.global_symbols.get(s.raw.as_str()) {
                     symbol
-                }
-                else {
+                } else {
                     panic!("Unknown symbol: {:?}", s);
                 }
             };

@@ -262,7 +262,7 @@ pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<
             let rhs = parse_expr_bp(lexer, r_bp)?;
             Expr::UnaryOp(op, Box::new(rhs))
         }
-        t => return Err(ParsingError::UnexpectedToken(token)),
+        _ => return Err(ParsingError::UnexpectedToken(token)),
     };
 
     loop {

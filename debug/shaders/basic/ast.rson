@@ -4,13 +4,13 @@ Program {
             ident: Spanned {
                 item: "main",
                 from: Position {
-                    line: 6,
+                    line: 4,
                     offset: Some(
                         5,
                     ),
                 },
                 to: Position {
-                    line: 6,
+                    line: 4,
                     offset: Some(
                         9,
                     ),
@@ -22,13 +22,13 @@ Program {
                     Spanned {
                         item: "L",
                         from: Position {
-                            line: 7,
+                            line: 5,
                             offset: Some(
                                 4,
                             ),
                         },
                         to: Position {
-                            line: 7,
+                            line: 5,
                             offset: Some(
                                 5,
                             ),
@@ -36,11 +36,11 @@ Program {
                     },
                     FuncCall(
                         (
-                            Spanned { item: "normalize", from: Position { line: 7, offset: Some(8) }, to: Position { line: 7, offset: Some(17) } },
+                            Spanned { item: "normalize", from: Position { line: 5, offset: Some(8) }, to: Position { line: 5, offset: Some(17) } },
                             [
                                 FuncCall(
                                     (
-                                        Spanned { item: "Vec3", from: Position { line: 7, offset: Some(18) }, to: Position { line: 7, offset: Some(22) } },
+                                        Spanned { item: "Vec3", from: Position { line: 5, offset: Some(18) }, to: Position { line: 5, offset: Some(22) } },
                                         [
                                             UnaryOp(
                                                 Sub,
@@ -50,13 +50,13 @@ Program {
                                                             0.5,
                                                         ),
                                                         from: Position {
-                                                            line: 7,
+                                                            line: 5,
                                                             offset: Some(
                                                                 24,
                                                             ),
                                                         },
                                                         to: Position {
-                                                            line: 7,
+                                                            line: 5,
                                                             offset: Some(
                                                                 27,
                                                             ),
@@ -70,13 +70,13 @@ Program {
                                                         1.0,
                                                     ),
                                                     from: Position {
-                                                        line: 7,
+                                                        line: 5,
                                                         offset: Some(
                                                             29,
                                                         ),
                                                     },
                                                     to: Position {
-                                                        line: 7,
+                                                        line: 5,
                                                         offset: Some(
                                                             32,
                                                         ),
@@ -91,13 +91,13 @@ Program {
                                                             1.0,
                                                         ),
                                                         from: Position {
-                                                            line: 7,
+                                                            line: 5,
                                                             offset: Some(
                                                                 35,
                                                             ),
                                                         },
                                                         to: Position {
-                                                            line: 7,
+                                                            line: 5,
                                                             offset: Some(
                                                                 38,
                                                             ),
@@ -116,13 +116,13 @@ Program {
                     Spanned {
                         item: "C",
                         from: Position {
-                            line: 8,
+                            line: 6,
                             offset: Some(
                                 4,
                             ),
                         },
                         to: Position {
-                            line: 8,
+                            line: 6,
                             offset: Some(
                                 5,
                             ),
@@ -130,7 +130,7 @@ Program {
                     },
                     FuncCall(
                         (
-                            Spanned { item: "Vec3", from: Position { line: 8, offset: Some(8) }, to: Position { line: 8, offset: Some(12) } },
+                            Spanned { item: "Vec3", from: Position { line: 6, offset: Some(8) }, to: Position { line: 6, offset: Some(12) } },
                             [
                                 Literal(
                                     Spanned {
@@ -138,13 +138,13 @@ Program {
                                             1.0,
                                         ),
                                         from: Position {
-                                            line: 8,
+                                            line: 6,
                                             offset: Some(
                                                 13,
                                             ),
                                         },
                                         to: Position {
-                                            line: 8,
+                                            line: 6,
                                             offset: Some(
                                                 16,
                                             ),
@@ -157,13 +157,13 @@ Program {
                                             0.5,
                                         ),
                                         from: Position {
-                                            line: 8,
+                                            line: 6,
                                             offset: Some(
                                                 18,
                                             ),
                                         },
                                         to: Position {
-                                            line: 8,
+                                            line: 6,
                                             offset: Some(
                                                 21,
                                             ),
@@ -176,13 +176,13 @@ Program {
                                             0.5,
                                         ),
                                         from: Position {
-                                            line: 8,
+                                            line: 6,
                                             offset: Some(
                                                 23,
                                             ),
                                         },
                                         to: Position {
-                                            line: 8,
+                                            line: 6,
                                             offset: Some(
                                                 26,
                                             ),
@@ -197,13 +197,13 @@ Program {
                     Spanned {
                         item: "cos_a",
                         from: Position {
-                            line: 10,
+                            line: 8,
                             offset: Some(
                                 4,
                             ),
                         },
                         to: Position {
-                            line: 10,
+                            line: 8,
                             offset: Some(
                                 9,
                             ),
@@ -211,13 +211,13 @@ Program {
                     },
                     FuncCall(
                         (
-                            Spanned { item: "dot", from: Position { line: 10, offset: Some(12) }, to: Position { line: 10, offset: Some(15) } },
+                            Spanned { item: "dot", from: Position { line: 8, offset: Some(12) }, to: Position { line: 8, offset: Some(15) } },
                             [
                                 Symbol(
-                                    Spanned { item: "L", from: Position { line: 10, offset: Some(16) }, to: Position { line: 10, offset: Some(17) } },
+                                    Spanned { item: "L", from: Position { line: 8, offset: Some(16) }, to: Position { line: 8, offset: Some(17) } },
                                 ),
                                 Symbol(
-                                    Spanned { item: "normal", from: Position { line: 10, offset: Some(19) }, to: Position { line: 10, offset: Some(25) } },
+                                    Spanned { item: "normal", from: Position { line: 8, offset: Some(19) }, to: Position { line: 8, offset: Some(25) } },
                                 ),
                             ],
                         ),
@@ -227,10 +227,10 @@ Program {
                     BinaryOp(
                         Mul,
                         Symbol(
-                            Spanned { item: "cos_a", from: Position { line: 12, offset: Some(11) }, to: Position { line: 12, offset: Some(16) } },
+                            Spanned { item: "cos_a", from: Position { line: 10, offset: Some(11) }, to: Position { line: 10, offset: Some(16) } },
                         ),
                         Symbol(
-                            Spanned { item: "C", from: Position { line: 12, offset: Some(19) }, to: Position { line: 12, offset: Some(20) } },
+                            Spanned { item: "C", from: Position { line: 10, offset: Some(19) }, to: Position { line: 10, offset: Some(20) } },
                         ),
                     ),
                 ),

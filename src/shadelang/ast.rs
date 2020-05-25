@@ -5,7 +5,7 @@ use std::fmt;
 pub type VResult = Result<(), Box<dyn std::error::Error>>;
 
 pub trait Visitor {
-    fn post_in_parameter(&mut self, _T: &mut InParameterDeclaration) -> VResult {
+    fn post_in_parameter(&mut self, _t: &mut InParameterDeclaration) -> VResult {
         Ok(())
     }
     fn post_expr(&mut self, _t: &mut Expr) -> VResult {
@@ -152,7 +152,7 @@ impl TypeKind {
             TypeKind::I32 => 4,
             TypeKind::F32 => 4,
             TypeKind::Vec3 => 12,
-            _ => unimplemented!("{:?}", self)
+            _ => unimplemented!("{:?}", self),
         }
     }
 }

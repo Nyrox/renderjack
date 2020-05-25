@@ -141,10 +141,10 @@ VMProgram {
         functions: {
             "main": FuncMeta {
                 symbols: {
-                    "cos_a": SymbolMeta {
-                        type_kind: F32,
+                    "C": SymbolMeta {
+                        type_kind: Vec3,
                         stack_offset: Some(
-                            24,
+                            12,
                         ),
                         is_static: false,
                     },
@@ -155,10 +155,10 @@ VMProgram {
                         ),
                         is_static: false,
                     },
-                    "C": SymbolMeta {
-                        type_kind: Vec3,
+                    "cos_a": SymbolMeta {
+                        type_kind: F32,
                         stack_offset: Some(
-                            12,
+                            24,
                         ),
                         is_static: false,
                     },

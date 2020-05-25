@@ -170,7 +170,7 @@ where
 fn main() {
     let im_dims = (800, 600);
 
-    let mut events_loop = glutin::event_loop::EventLoop::new();
+    let events_loop = glutin::event_loop::EventLoop::new();
 
     let wb = glutin::window::WindowBuilder::new()
         .with_inner_size(glutin::dpi::LogicalSize::new(
@@ -426,37 +426,4 @@ fn main() {
         }
         _ => (),
     });
-}
-
-fn test_parser_basic() {
-    let ast = shadelang::parser::parse(
-        r"
-out float a
-
-float computeA() {
-    return 1.0 + 2.0 * 5.0
-}
-
-float computeB() {
-    c = 5.0
-    return computeA() * c
-}
-
-
-void main() {
-    c = computeB()
-    b = c * 5.0
-    a = b
-}
-    ",
-    );
-
-    let program = shadelang::compiler::compile(ast);
-
-    println!("{:#?}", program);
-
-    let mut vm = shadelang::vm::VirtualMachine::new(&program);
-    vm.run_fn("main");
-
-    println!("{:?}", bytemuck::cast_slice::<_, f32>(vm.stack.as_slice()));
 }
