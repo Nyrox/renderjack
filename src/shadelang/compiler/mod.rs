@@ -122,7 +122,13 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                 generate_expr(program, ast, fnc, arg);
             }
 
-            if let Some((func, _)) = crate::shadelang::builtins::get_builtin_fn(id.raw.as_ref()) {
+            if let Some((func, _)) = crate::shadelang::builtins::get_builtin_fn(
+                id.raw.as_ref(),
+                &args
+                    .iter()
+                    .map(|e| e.get_type().unwrap())
+                    .collect::<Vec<_>>(),
+            ) {
                 program
                     .code
                     .push(MemoryCell::with_data(OpCode::CallBuiltIn, func as u16));

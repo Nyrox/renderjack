@@ -121,6 +121,7 @@ impl<I: Iterator<Item = char>> Scanner<I> {
                 return Ok(ScanningProduct::Finished);
             }
         };
+        let peeked = self.peek();
 
         let tok = |t| {
             let to = self.position();
@@ -135,7 +136,16 @@ impl<I: Iterator<Item = char>> Scanner<I> {
             '=' => tok(Token::Equals),
             '-' => tok(Token::Minus),
             '+' => tok(Token::Plus),
-            '/' => tok(Token::Slash),
+            '/' => match peeked {
+                Some('/') => {
+                    while self.advance().ok_or(ScanningError::UnexpectedEndOfFile)? != '\n' {}
+                    self.offset = 0;
+                    self.line += 1;
+
+                    Ok(ScanningProduct::Skip)
+                }
+                _ => tok(Token::Slash),
+            },
             '*' => tok(Token::Star),
             ',' => tok(Token::Comma),
 
@@ -145,8 +155,8 @@ impl<I: Iterator<Item = char>> Scanner<I> {
                 Ok(ScanningProduct::Skip)
             }
             c if c.is_whitespace() => Ok(ScanningProduct::Skip),
-            c if c.is_alphabetic() => self.scan_identifier(c),
             c if c.is_numeric() => self.scan_numerics(c),
+            c if c.is_alphanumeric() || c == '_' => self.scan_identifier(c),
             c => {
                 return Err(ScanningError::UnexpectedCharacter(Spanned::new(
                     c,

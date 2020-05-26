@@ -29,6 +29,7 @@ pub trait BuiltInCallable {
     fn ident(&self) -> &str;
     fn vm_impl(&self, vm: &mut VirtualMachine);
     fn return_type(&self) -> TypeKind;
+    fn arg_types(&self) -> Vec<TypeKind>;
 }
 
 #[generate_builtin_fn("Vec3")]
@@ -51,11 +52,30 @@ fn Vec3Dot(a: Vec3, b: Vec3) -> f32 {
     a.x * b.x + a.y * b.y + a.z * b.z
 }
 
-const FUNCTIONS: &[&dyn BuiltInCallable] = &[&Vec3Constructor, &Vec3Normalize, &Vec3Dot];
+#[generate_builtin_fn("foo")]
+fn FloatFoo(a: f32) -> f32 {
+    a * 2.0
+}
 
-pub fn get_builtin_fn(id: &str) -> Option<(usize, &dyn BuiltInCallable)> {
+#[generate_builtin_fn("foo")]
+fn Vec3Foo(a: Vec3) -> Vec3 {
+    a
+}
+
+const FUNCTIONS: &[&dyn BuiltInCallable] = &[
+    &Vec3Constructor,
+    &Vec3Normalize,
+    &Vec3Dot,
+    &FloatFoo,
+    &Vec3Foo,
+];
+
+pub fn get_builtin_fn<'a>(
+    id: &str,
+    arg_types: &'a [TypeKind],
+) -> Option<(usize, &'static dyn BuiltInCallable)> {
     for (i, f) in FUNCTIONS.iter().enumerate() {
-        if f.ident() == id {
+        if f.ident() == id && f.arg_types().as_slice() == arg_types {
             return Some((i, *f));
         }
     }

@@ -136,7 +136,7 @@ pub enum Literal {
     DecimalLiteral(f64),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TypeKind {
     Void,
     I32,
@@ -196,6 +196,13 @@ impl Expr {
         match self {
             Expr::FuncCall((def, _)) => def.resolved.clone().map(|(_, tk)| tk),
             Expr::Symbol(s) => s.resolved.clone().map(|(_, tk)| tk),
+            Expr::UnaryOp(_, e) => e.get_type(),
+            Expr::Literal(l) => {
+                match l.item {
+                    Literal::DecimalLiteral(_) => Some(TypeKind::F32),
+                    Literal::IntegerLiteral(_) => Some(TypeKind::I32),
+                }
+            }
             _ => unimplemented!("{:?}", &self),
         }
     }

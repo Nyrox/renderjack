@@ -23,7 +23,7 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
         _ => panic!(),
     };
 
-    let args = func.sig.inputs.clone().into_iter().rev().map(|a| match a {
+    let cursed_wrap = func.sig.inputs.clone().into_iter().rev().map(|a| match a {
         syn::FnArg::Typed(pt) => {
             let name = match &*pt.pat {
                 syn::Pat::Ident(i) => i.ident.clone(),
@@ -32,12 +32,21 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
 
             let ty = pt.ty;
 
-            quote! {
+            let args = quote! {
                 let #name = unsafe { vm.pop_stack::<#ty>() };
-            }
+            };
+
+            let arg_types = quote! {
+                <#ty as BuiltInType>::type_kind()
+            };
+
+            (args, arg_types)
         }
         v => panic!("Unexpected argument: {:?}", v),
     });
+
+    let args = cursed_wrap.clone().map(|(a, _)| a);
+    let arg_types = cursed_wrap.clone().map(|(_, a)| a);
 
     let call_args = func.sig.inputs.clone().into_iter().map(|a| match a {
         syn::FnArg::Typed(syn::PatType { pat: p, .. }) => match &*p {
@@ -55,6 +64,11 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
         impl BuiltInCallable for #struct_name {
             fn ident(&self) -> &str { #name }
             fn return_type(&self) -> TypeKind { <#ret_type as BuiltInType>::type_kind() }
+            fn arg_types(&self) -> Vec<TypeKind> {
+                vec![
+                    #(#arg_types),*
+                ]
+            }
             fn vm_impl(&self, vm: &mut VirtualMachine) {
                 #(#args)*
 

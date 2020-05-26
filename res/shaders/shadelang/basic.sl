@@ -7,5 +7,10 @@ Vec3 main() {
     
     cos_a = dot(L, normal)
 
+    // call float
+    cos_b = foo(cos_a)
+    // call vec
+    D = foo(C)
+
     return cos_a * C
 }
