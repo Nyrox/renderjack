@@ -107,14 +107,13 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
             }
 
             let arg_types = &args
-            .iter()
-            .map(|e| e.get_type().unwrap())
-            .collect::<Vec<_>>();
+                .iter()
+                .map(|e| e.get_type().unwrap())
+                .collect::<Vec<_>>();
 
-            if let Some((func, _)) = crate::shadelang::builtins::get_builtin_fn(
-                id.raw.as_ref(),
-                arg_types,
-            ) {
+            if let Some((func, _)) =
+                crate::shadelang::builtins::get_builtin_fn(id.raw.as_ref(), arg_types)
+            {
                 program
                     .code
                     .push(MemoryCell::with_data(OpCode::CallBuiltIn, func as u16));

@@ -108,22 +108,24 @@ impl<'a> Visitor for ResolveTypes<'a> {
 
     fn post_func_call(&mut self, func: &mut FuncCall) -> VResult {
         let arg_types = func
-        .1
-        .iter()
-        .map(|e| e.get_type().unwrap())
-        .collect::<Vec<_>>();
+            .1
+            .iter()
+            .map(|e| e.get_type().unwrap())
+            .collect::<Vec<_>>();
 
-        if let Some((_, builtin)) = crate::shadelang::builtins::get_builtin_fn(
-            func.0.raw.as_ref(),
-            &arg_types,
-        ) {
+        if let Some((_, builtin)) =
+            crate::shadelang::builtins::get_builtin_fn(func.0.raw.as_ref(), &arg_types)
+        {
             func.0.resolved = Some((func.0.raw.item.clone(), builtin.return_type()));
             Ok(())
         } else if let Some(def) = self.program_data.functions.get(func.0.raw.as_str()) {
             Ok(())
         } else {
             panic!();
-            Err(Box::new(TypeError::UnknownFunction(func.0.raw.clone(), arg_types)))
+            Err(Box::new(TypeError::UnknownFunction(
+                func.0.raw.clone(),
+                arg_types,
+            )))
         }
     }
 

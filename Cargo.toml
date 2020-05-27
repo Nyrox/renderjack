@@ -22,3 +22,6 @@ members=[
     "builtins",
     "macros"
 ]
+
+[build-dependencies]
+regex="1"
