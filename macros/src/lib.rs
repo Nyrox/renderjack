@@ -23,7 +23,7 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
         _ => panic!(),
     };
 
-    let cursed_wrap = func.sig.inputs.clone().into_iter().rev().map(|a| match a {
+    let cursed_wrap = func.sig.inputs.clone().into_iter().map(|a| match a {
         syn::FnArg::Typed(pt) => {
             let name = match &*pt.pat {
                 syn::Pat::Ident(i) => i.ident.clone(),
@@ -45,7 +45,7 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
         v => panic!("Unexpected argument: {:?}", v),
     });
 
-    let args = cursed_wrap.clone().map(|(a, _)| a);
+    let args = cursed_wrap.clone().rev().map(|(a, _)| a);
     let arg_types = cursed_wrap.clone().map(|(_, a)| a);
 
     let call_args = func.sig.inputs.clone().into_iter().map(|a| match a {

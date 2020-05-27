@@ -101,33 +101,19 @@ pub fn codegen(ast: Program, mut data: ProgramData) -> VMProgram {
 
 pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, expr: &Expr) {
     match expr {
-        Expr::BinaryOp(op, e1, e2) => {
-            generate_expr(program, ast, fnc, e1);
-            generate_expr(program, ast, fnc, e2);
-
-            let inst = match (op, e1.get_type(), e2.get_type()) {
-                (BinaryOperator::Mul, Some(TypeKind::F32), Some(TypeKind::Vec3)) => {
-                    OpCode::MulF32_Vec3
-                }
-                (BinaryOperator::Add, _, _) => OpCode::AddF32,
-                (BinaryOperator::Sub, _, _) => OpCode::SubF32,
-                (BinaryOperator::Mul, _, _) => OpCode::MulF32,
-                (BinaryOperator::Div, _, _) => OpCode::DivF32,
-            };
-
-            program.code.push(MemoryCell::plain_inst(inst));
-        }
         Expr::FuncCall((id, args)) => {
             for arg in args {
                 generate_expr(program, ast, fnc, arg);
             }
 
+            let arg_types = &args
+            .iter()
+            .map(|e| e.get_type().unwrap())
+            .collect::<Vec<_>>();
+
             if let Some((func, _)) = crate::shadelang::builtins::get_builtin_fn(
                 id.raw.as_ref(),
-                &args
-                    .iter()
-                    .map(|e| e.get_type().unwrap())
-                    .collect::<Vec<_>>(),
+                arg_types,
             ) {
                 program
                     .code
@@ -138,7 +124,7 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                     func.address.unwrap() as u16,
                 ));
             } else {
-                panic!("Unrecognized function: {:?}", id);
+                panic!("Unrecognized function: {:?}: ({:?})", id, arg_types);
             }
         }
         Expr::Literal(l) => match l.item {
@@ -176,18 +162,6 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                 ))
             }
         }
-        Expr::UnaryOp(op, rhs) => match op {
-            UnaryOperator::Sub => {
-                generate_expr(program, ast, fnc, rhs);
-                program.code.push(MemoryCell::plain_inst(OpCode::ConstF32));
-                program
-                    .code
-                    .push(MemoryCell::raw(unsafe { std::mem::transmute(-1.0 as f32) }));
-
-                program.code.push(MemoryCell::plain_inst(OpCode::MulF32));
-            }
-            _ => unimplemented!(),
-        },
         _ => {
             dbg!(expr);
             unimplemented!();

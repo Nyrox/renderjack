@@ -188,36 +188,20 @@ pub fn parse_statements(tokens: &mut impl TokenSource) -> ParsingResult<Vec<Stat
     Ok(output)
 }
 
-pub fn get_infix_operator(t: &Token) -> Option<BinaryOperator> {
+pub fn infix_binding_power(t: &Token) -> Option<(u8, u8)> {
     match t {
-        Token::Plus => Some(BinaryOperator::Add),
-        Token::Minus => Some(BinaryOperator::Sub),
-        Token::Star => Some(BinaryOperator::Mul),
-        Token::Slash => Some(BinaryOperator::Div),
+        Token::Plus => Some((1, 2)),
+        Token::Minus => Some((1, 2)),
+        Token::Star => Some((3, 4)),
+        Token::Slash => Some((3, 4)),
         _ => None,
     }
 }
 
-pub fn infix_binding_power(op: BinaryOperator) -> (u8, u8) {
-    match op {
-        BinaryOperator::Add => (1, 2),
-        BinaryOperator::Sub => (1, 2),
-        BinaryOperator::Mul => (3, 4),
-        BinaryOperator::Div => (3, 4),
-    }
-}
-
-pub fn get_prefix_operator(t: &Token) -> Option<UnaryOperator> {
+pub fn prefix_binding_power(t: &Token) -> Option<((), u8)> {
     match t {
-        Token::Minus => Some(UnaryOperator::Sub),
+        Token::Minus => Some(((), 5)),
         _ => None,
-    }
-}
-
-pub fn prefix_binding_power(op: UnaryOperator) -> ((), u8) {
-    match op {
-        UnaryOperator::Sub => ((), 5),
-        _ => unimplemented!(),
     }
 }
 
@@ -255,34 +239,50 @@ pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<
             lexer.expect_token(Token::RightParen)?;
             e
         }
-        t if get_prefix_operator(t).is_some() => {
-            let op = get_prefix_operator(t).unwrap();
-            let ((), r_bp) = prefix_binding_power(op);
+        t if prefix_binding_power(t).is_some() => {
+            let ((), r_bp) = prefix_binding_power(t).unwrap();
 
             let rhs = parse_expr_bp(lexer, r_bp)?;
-            Expr::UnaryOp(op, Box::new(rhs))
+            let fnc = match t {
+                Token::Minus => "__op_unary_neg",
+                _ => unreachable!(),
+            };
+
+            Expr::FuncCall((
+                Reference::unresolved(token.map(|_| fnc.to_owned())),
+                vec![Box::new(rhs)],
+            ))
         }
         _ => return Err(ParsingError::UnexpectedToken(token)),
     };
 
     loop {
-        let op = match lexer.peek() {
-            Some(t) if get_infix_operator(t).is_some() => get_infix_operator(t).unwrap(),
+        let (t, (l_bp, r_bp)) = match lexer.peek() {
+            Some(t) if infix_binding_power(t).is_some() => {
+                (t.clone(), infix_binding_power(t).unwrap())
+            }
             _ => break,
         };
-
-        let (l_bp, r_bp) = infix_binding_power(op);
-        {
-            if l_bp < min_bp {
-                break;
-            }
-
-            lexer.next().unwrap();
-            let rhs = parse_expr_bp(lexer, r_bp)?;
-
-            lhs = Expr::BinaryOp(op, Box::new(lhs), Box::new(rhs));
-            continue;
+        if l_bp < min_bp {
+            break;
         }
+
+        lexer.next().unwrap();
+        let rhs = parse_expr_bp(lexer, r_bp)?;
+
+        let fnc = match &t.item {
+            Token::Plus => "__op_binary_plus",
+            Token::Minus => "__op_binary_sub",
+            Token::Star => "__op_binary_mul",
+            Token::Slash => "__op_binary_slash",
+            _ => unreachable!(),
+        };
+
+        lhs = Expr::FuncCall((
+            Reference::unresolved(t.map(|_| fnc.to_owned())),
+            vec![Box::new(lhs), Box::new(rhs)],
+        ));
+        continue;
     }
 
     Ok(lhs)

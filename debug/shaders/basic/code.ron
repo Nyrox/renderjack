@@ -9,16 +9,8 @@ VMProgram {
             16128,
         ),
         MemoryCell(
-            ConstF32,
-            0,
-        ),
-        MemoryCell(
-            AddI32,
-            49024,
-        ),
-        MemoryCell(
-            MulF32,
-            0,
+            CallBuiltIn,
+            5,
         ),
         MemoryCell(
             ConstF32,
@@ -37,16 +29,8 @@ VMProgram {
             16256,
         ),
         MemoryCell(
-            ConstF32,
-            0,
-        ),
-        MemoryCell(
-            AddI32,
-            49024,
-        ),
-        MemoryCell(
-            MulF32,
-            0,
+            CallBuiltIn,
+            5,
         ),
         MemoryCell(
             CallBuiltIn,
@@ -117,10 +101,6 @@ VMProgram {
             24,
         ),
         MemoryCell(
-            CallBuiltIn,
-            3,
-        ),
-        MemoryCell(
             Load4,
             12,
         ),
@@ -134,37 +114,24 @@ VMProgram {
         ),
         MemoryCell(
             CallBuiltIn,
-            4,
-        ),
-        MemoryCell(
-            Load4,
-            24,
-        ),
-        MemoryCell(
-            Load4,
-            12,
-        ),
-        MemoryCell(
-            Load4,
-            16,
-        ),
-        MemoryCell(
-            Load4,
-            20,
-        ),
-        MemoryCell(
-            MulF32_Vec3,
-            0,
+            6,
         ),
         MemoryCell(
             Ret,
-            44,
+            28,
         ),
     ],
     data: ProgramData {
         functions: {
             "main": FuncMeta {
                 symbols: {
+                    "cos_a": SymbolMeta {
+                        type_kind: F32,
+                        stack_offset: Some(
+                            24,
+                        ),
+                        is_static: false,
+                    },
                     "L": SymbolMeta {
                         type_kind: Vec3,
                         stack_offset: Some(
@@ -176,27 +143,6 @@ VMProgram {
                         type_kind: Vec3,
                         stack_offset: Some(
                             12,
-                        ),
-                        is_static: false,
-                    },
-                    "cos_a": SymbolMeta {
-                        type_kind: F32,
-                        stack_offset: Some(
-                            24,
-                        ),
-                        is_static: false,
-                    },
-                    "D": SymbolMeta {
-                        type_kind: Vec3,
-                        stack_offset: Some(
-                            32,
-                        ),
-                        is_static: false,
-                    },
-                    "cos_b": SymbolMeta {
-                        type_kind: F32,
-                        stack_offset: Some(
-                            28,
                         ),
                         is_static: false,
                     },

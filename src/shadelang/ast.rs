@@ -117,20 +117,6 @@ impl<T: fmt::Debug, R: fmt::Debug> fmt::Debug for Reference<T, R> {
 }
 
 #[derive(Clone, Debug, Copy)]
-pub enum BinaryOperator {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
-
-#[derive(Clone, Debug, Copy)]
-pub enum UnaryOperator {
-    Not,
-    Sub,
-}
-
-#[derive(Clone, Debug, Copy)]
 pub enum Literal {
     IntegerLiteral(i64),
     DecimalLiteral(f64),
@@ -185,8 +171,6 @@ impl Visitable for FuncCall {
 #[derive(Clone, Debug)]
 pub enum Expr {
     FuncCall(FuncCall),
-    BinaryOp(BinaryOperator, Box<Expr>, Box<Expr>),
-    UnaryOp(UnaryOperator, Box<Expr>),
     Literal(Spanned<Literal>),
     Symbol(Symbol),
 }
@@ -196,13 +180,10 @@ impl Expr {
         match self {
             Expr::FuncCall((def, _)) => def.resolved.clone().map(|(_, tk)| tk),
             Expr::Symbol(s) => s.resolved.clone().map(|(_, tk)| tk),
-            Expr::UnaryOp(_, e) => e.get_type(),
-            Expr::Literal(l) => {
-                match l.item {
-                    Literal::DecimalLiteral(_) => Some(TypeKind::F32),
-                    Literal::IntegerLiteral(_) => Some(TypeKind::I32),
-                }
-            }
+            Expr::Literal(l) => match l.item {
+                Literal::DecimalLiteral(_) => Some(TypeKind::F32),
+                Literal::IntegerLiteral(_) => Some(TypeKind::I32),
+            },
             _ => unimplemented!("{:?}", &self),
         }
     }
@@ -217,11 +198,6 @@ impl Visitable for Expr {
                 }
                 v.post_func_call(func)?;
             }
-            Expr::BinaryOp(_, e1, e2) => (|| {
-                e1.visit(v)?;
-                e2.visit(v)
-            })()?,
-            Expr::UnaryOp(_, e) => e.visit(v)?,
             Expr::Symbol(s) => s.visit(v)?,
             _ => (),
         }

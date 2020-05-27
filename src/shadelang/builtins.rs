@@ -62,12 +62,28 @@ fn Vec3Foo(a: Vec3) -> Vec3 {
     a
 }
 
+#[generate_builtin_fn("__op_unary_neg")]
+fn UnNegFloat(a: f32) -> f32 {
+    -a
+}
+
+#[generate_builtin_fn("__op_binary_mul")]
+fn BinMulFloatVec3(a: f32, v: Vec3) -> Vec3 {
+    Vec3 {
+        x: v.x * a,
+        y: v.y * a,
+        z: v.z * a,
+    }
+}
+
 const FUNCTIONS: &[&dyn BuiltInCallable] = &[
     &Vec3Constructor,
     &Vec3Normalize,
     &Vec3Dot,
     &FloatFoo,
     &Vec3Foo,
+    &UnNegFloat,
+    &BinMulFloatVec3,
 ];
 
 pub fn get_builtin_fn<'a>(
