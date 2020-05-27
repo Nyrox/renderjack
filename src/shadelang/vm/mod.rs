@@ -1,25 +1,10 @@
-use std::collections::HashMap;
 use std::mem;
-
-use crate::shadelang::ast::*;
 
 use crate::shadelang::compiler::program_data::ProgramData;
 
 #[repr(u16)]
 #[derive(Clone, Copy, Debug)]
 pub enum OpCode {
-    AddI32,
-    SubI32,
-    MulI32,
-    DivI32,
-
-    AddF32,
-    SubF32,
-    MulF32,
-    DivF32,
-
-    MulF32_Vec3,
-
     ConstF32,
     Void,
     Mov4,
@@ -196,28 +181,6 @@ impl<'a> VirtualMachine<'a> {
                     self.push_stack_raw(self.program.code[self.isp].data);
                     self.isp = self.isp + 1;
                 }
-                OpCode::MulF32 => unsafe {
-                    let f1 = self.pop_stack::<f32>();
-                    let f2 = self.pop_stack::<f32>();
-
-                    self.push_stack_raw(std::mem::transmute(f1 * f2));
-                },
-                OpCode::MulF32_Vec3 => unsafe {
-                    let z = self.pop_stack::<f32>();
-                    let y = self.pop_stack::<f32>();
-                    let x = self.pop_stack::<f32>();
-                    let a = self.pop_stack::<f32>();
-
-                    self.push_stack(a * x);
-                    self.push_stack(a * y);
-                    self.push_stack(a * z);
-                },
-                OpCode::AddF32 => unsafe {
-                    let f1 = self.pop_stack::<f32>();
-                    let f2 = self.pop_stack::<f32>();
-
-                    self.push_stack_raw(std::mem::transmute(f1 + f2));
-                },
                 OpCode::Mov4 => unsafe {
                     let val = self.pop_stack::<u32>();
                     self.write_stack(stack_base + p as usize, val);

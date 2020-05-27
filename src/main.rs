@@ -9,7 +9,6 @@ pub mod shader;
 pub mod transform;
 
 use camera::Camera;
-use cgmath::prelude::*;
 use cgmath::{Deg, Matrix4, PerspectiveFov, Rad, Vector2, Vector3, Vector4};
 use transform::Transform;
 
@@ -372,7 +371,6 @@ fn main() {
 
                 shadelang_vm.run_fn("main");
 
-                let color: [f32; 3] = shadelang_vm.get_global("normal");
                 let color: [f32; 3] = unsafe { shadelang_vm.pop_stack() };
                 // let cr = shadelang_vm.get_out_float("cr");
                 // let cg = shadelang_vm.get_out_float("cg");

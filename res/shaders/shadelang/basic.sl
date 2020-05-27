@@ -6,6 +6,7 @@ Vec3 main() {
     C = Vec3(1.0, 0.5, 0.5)
     
     cos_a = dot(L, normal)
-    
-    return cos_a * C
+    ambient = 0.3
+
+    return cos_a * C + ambient * C
 }

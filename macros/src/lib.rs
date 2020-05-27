@@ -5,7 +5,7 @@ use syn::{Attribute, AttributeArgs, DeriveInput, ItemFn};
 #[proc_macro_attribute]
 pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream {
     let opts = syn::parse_macro_input!(attr as AttributeArgs);
-    let func = syn::parse_macro_input!(item as ItemFn);
+    let mut func = syn::parse_macro_input!(item as ItemFn);
 
     assert_eq!(opts.len(), 1, "Expected only one argument.");
 
@@ -14,9 +14,7 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
         _ => panic!("Expected first and only macro argument to be a string."),
     };
 
-    println!("{}", name);
-
-    let struct_name = &func.sig.ident;
+    let struct_name = func.sig.ident.clone();
 
     let ret_type = match &func.sig.output {
         syn::ReturnType::Type(_, t) => t,
@@ -56,6 +54,8 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
         _ => panic!(),
     });
 
+    func.sig.ident = syn::Ident::new("__impl", proc_macro::Span::call_site().into());
+
     (quote! {
 
         pub struct #struct_name;
@@ -74,7 +74,7 @@ pub fn generate_builtin_fn(attr: TokenStream, item: TokenStream) -> TokenStream 
 
                 #func;
 
-                let rv = #struct_name(#(#call_args),*);
+                let rv = __impl(#(#call_args),*);
 
                 vm.push_stack(rv);
             }

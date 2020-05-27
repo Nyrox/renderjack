@@ -184,7 +184,6 @@ impl Expr {
                 Literal::DecimalLiteral(_) => Some(TypeKind::F32),
                 Literal::IntegerLiteral(_) => Some(TypeKind::I32),
             },
-            _ => unimplemented!("{:?}", &self),
         }
     }
 }
@@ -251,21 +250,8 @@ impl Visitable for InParameterDeclaration {
 }
 
 #[derive(Clone, Debug)]
-pub struct OutParameterDeclaration {
-    pub type_kind: Spanned<TypeKind>,
-    pub ident: Spanned<Ident>,
-}
-
-impl Visitable for OutParameterDeclaration {
-    fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
 pub struct Program {
     pub functions: Vec<FunctionDeclaration>,
-    pub out_parameters: Vec<OutParameterDeclaration>,
     pub in_parameters: Vec<InParameterDeclaration>,
 }
 
@@ -273,7 +259,6 @@ impl Program {
     pub fn new() -> Self {
         Program {
             functions: Vec::new(),
-            out_parameters: Vec::new(),
             in_parameters: Vec::new(),
         }
     }
@@ -287,7 +272,6 @@ impl Visitable for Program {
     fn visit(&mut self, v: &mut dyn Visitor) -> VResult {
         (|| {
             self.in_parameters.visit(v)?;
-            self.out_parameters.visit(v)?;
             self.functions.visit(v)
         })()?;
 

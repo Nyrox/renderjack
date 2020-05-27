@@ -1,8 +1,6 @@
 use crate::shadelang::ast::TypeKind;
 use crate::shadelang::vm::VirtualMachine;
 
-use builtins::generate_builtin_fn;
-
 pub mod functions;
 
 #[repr(C)]

@@ -37,19 +37,6 @@ pub fn codegen(ast: Program, mut data: ProgramData) -> VMProgram {
 
     program.data = data.clone();
 
-    for o in ast.out_parameters.iter() {
-        data.global_symbols.insert(
-            o.ident.item.clone(),
-            SymbolMeta {
-                stack_offset: Some(static_section),
-                type_kind: o.type_kind.clone().item,
-                is_static: true,
-            },
-        );
-
-        static_section += 4;
-    }
-
     for f in ast.functions.iter() {
         let func_meta = data.functions.get_mut(f.ident.item.as_str()).unwrap();
         func_meta.address = Some(program.code.len());
@@ -160,10 +147,6 @@ pub fn generate_expr(program: &mut VMProgram, ast: &Program, fnc: &FuncMeta, exp
                     (offset + (i * 4)) as u16,
                 ))
             }
-        }
-        _ => {
-            dbg!(expr);
-            unimplemented!();
         }
     }
 }

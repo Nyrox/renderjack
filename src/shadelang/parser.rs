@@ -101,16 +101,6 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
         let token = token.unwrap();
 
         match &token.item {
-            // Out Specifiers
-            Token::Out => {
-                let type_kind = expect_typekind(tokens)?;
-
-                let ident = tokens.expect_identifier()?;
-                program
-                    .out_parameters
-                    .push(OutParameterDeclaration { type_kind, ident });
-                continue;
-            }
             Token::In => {
                 let type_kind = expect_typekind(tokens)?;
 
@@ -145,10 +135,6 @@ pub fn parse_program(tokens: &mut impl TokenSource) -> ParsingResult<Program> {
                     param_types: vec![],
                     statements,
                 });
-            }
-
-            _ => {
-                return Err(ParsingError::UnexpectedToken(token));
             }
         }
     }
@@ -271,10 +257,10 @@ pub fn parse_expr_bp(lexer: &mut impl TokenSource, min_bp: u8) -> ParsingResult<
         let rhs = parse_expr_bp(lexer, r_bp)?;
 
         let fnc = match &t.item {
-            Token::Plus => "__op_binary_plus",
+            Token::Plus => "__op_binary_add",
             Token::Minus => "__op_binary_sub",
             Token::Star => "__op_binary_mul",
-            Token::Slash => "__op_binary_slash",
+            Token::Slash => "__op_binary_div",
             _ => unreachable!(),
         };
 
