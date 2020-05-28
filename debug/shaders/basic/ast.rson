@@ -305,7 +305,6 @@ Program {
             ],
         },
     ],
-    out_parameters: [],
     in_parameters: [
         InParameterDeclaration {
             type_kind: Spanned {

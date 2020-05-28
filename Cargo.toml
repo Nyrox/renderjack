@@ -14,14 +14,8 @@ image="0.23"
 cgmath="0.17"
 glutin="0.24"
 gl="0.14"
-bytemuck="1.2"
-builtins={ path="./builtins/" }
+
+motokigo={ path="./motokigo" }
 
 [workspace]
-members=[
-    "builtins",
-    "macros"
-]
-
-[build-dependencies]
-regex="1"
+exclude=["motokigo"]

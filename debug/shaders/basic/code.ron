@@ -5,7 +5,7 @@ VMProgram {
             0,
         ),
         MemoryCell(
-            AddI32,
+            ConstF32,
             16128,
         ),
         MemoryCell(
@@ -17,7 +17,7 @@ VMProgram {
             0,
         ),
         MemoryCell(
-            AddI32,
+            ConstF32,
             16256,
         ),
         MemoryCell(
@@ -25,7 +25,7 @@ VMProgram {
             0,
         ),
         MemoryCell(
-            AddI32,
+            ConstF32,
             16256,
         ),
         MemoryCell(
@@ -45,7 +45,7 @@ VMProgram {
             0,
         ),
         MemoryCell(
-            AddI32,
+            ConstF32,
             16256,
         ),
         MemoryCell(
@@ -53,7 +53,7 @@ VMProgram {
             0,
         ),
         MemoryCell(
-            AddI32,
+            ConstF32,
             16128,
         ),
         MemoryCell(
@@ -61,7 +61,7 @@ VMProgram {
             0,
         ),
         MemoryCell(
-            AddI32,
+            ConstF32,
             16128,
         ),
         MemoryCell(
@@ -154,17 +154,17 @@ VMProgram {
         functions: {
             "main": FuncMeta {
                 symbols: {
-                    "C": SymbolMeta {
-                        type_kind: Vec3,
-                        stack_offset: Some(
-                            12,
-                        ),
-                        is_static: false,
-                    },
                     "cos_a": SymbolMeta {
                         type_kind: F32,
                         stack_offset: Some(
                             24,
+                        ),
+                        is_static: false,
+                    },
+                    "L": SymbolMeta {
+                        type_kind: Vec3,
+                        stack_offset: Some(
+                            0,
                         ),
                         is_static: false,
                     },
@@ -175,10 +175,10 @@ VMProgram {
                         ),
                         is_static: false,
                     },
-                    "L": SymbolMeta {
+                    "C": SymbolMeta {
                         type_kind: Vec3,
                         stack_offset: Some(
-                            0,
+                            12,
                         ),
                         is_static: false,
                     },

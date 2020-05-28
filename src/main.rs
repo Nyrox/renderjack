@@ -4,9 +4,11 @@
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
-pub mod shadelang;
 pub mod shader;
 pub mod transform;
+
+
+use motokigo::{vm, compiler, parser};
 
 use camera::Camera;
 use cgmath::{Deg, Matrix4, PerspectiveFov, Rad, Vector2, Vector3, Vector4};
@@ -285,13 +287,13 @@ fn main() {
         let src = read_file_contents("res/shaders/shadelang/basic.sl");
         std::fs::create_dir_all("debug/shaders/basic/").ok();
 
-        let program = shadelang::parser::parse(&src);
+        let program = parser::parse(&src);
         std::fs::write("debug/shaders/basic/ast.rson", format!("{:#?}", program)).ok();
-        let program = shadelang::compiler::compile(program);
+        let program = compiler::compile(program);
         std::fs::write("debug/shaders/basic/code.ron", format!("{:#?}", program)).ok();
         program
     };
-    let mut shadelang_vm = shadelang::vm::VirtualMachine::new(&shadelang_shader);
+    let mut shadelang_vm = vm::VirtualMachine::new(&shadelang_shader);
 
     let viewport = Viewport {
         x: 0,
