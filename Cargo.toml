@@ -14,7 +14,7 @@ image="0.23"
 cgmath="0.17"
 glutin="0.24"
 gl="0.14"
-
+bytemuck="1.2"
 motokigo={ path="./motokigo" }
 
 [workspace]

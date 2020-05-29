@@ -41,6 +41,10 @@ VMProgram {
             4,
         ),
         MemoryCell(
+            StmtMarker,
+            5,
+        ),
+        MemoryCell(
             ConstF32,
             0,
         ),
@@ -67,6 +71,10 @@ VMProgram {
         MemoryCell(
             CallBuiltIn,
             3,
+        ),
+        MemoryCell(
+            StmtMarker,
+            6,
         ),
         MemoryCell(
             Load4,
@@ -97,10 +105,18 @@ VMProgram {
             5,
         ),
         MemoryCell(
+            StmtMarker,
+            8,
+        ),
+        MemoryCell(
             ConstF32,
             0,
         ),
         MemoryCell,
+        MemoryCell(
+            StmtMarker,
+            9,
+        ),
         MemoryCell(
             Load4,
             24,
@@ -146,6 +162,10 @@ VMProgram {
             2,
         ),
         MemoryCell(
+            StmtMarker,
+            11,
+        ),
+        MemoryCell(
             Ret,
             32,
         ),
@@ -154,6 +174,20 @@ VMProgram {
         functions: {
             "main": FuncMeta {
                 symbols: {
+                    "C": SymbolMeta {
+                        type_kind: Vec3,
+                        stack_offset: Some(
+                            12,
+                        ),
+                        is_static: false,
+                    },
+                    "ambient": SymbolMeta {
+                        type_kind: F32,
+                        stack_offset: Some(
+                            28,
+                        ),
+                        is_static: false,
+                    },
                     "cos_a": SymbolMeta {
                         type_kind: F32,
                         stack_offset: Some(
@@ -165,20 +199,6 @@ VMProgram {
                         type_kind: Vec3,
                         stack_offset: Some(
                             0,
-                        ),
-                        is_static: false,
-                    },
-                    "ambient": SymbolMeta {
-                        type_kind: F32,
-                        stack_offset: Some(
-                            28,
-                        ),
-                        is_static: false,
-                    },
-                    "C": SymbolMeta {
-                        type_kind: Vec3,
-                        stack_offset: Some(
-                            12,
                         ),
                         is_static: false,
                     },

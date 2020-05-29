@@ -7,8 +7,10 @@ pub mod opengl;
 pub mod shader;
 pub mod transform;
 
-
-use motokigo::{vm, compiler, parser};
+use motokigo::{
+    compiler, parser,
+    vm::{self, *},
+};
 
 use camera::Camera;
 use cgmath::{Deg, Matrix4, PerspectiveFov, Rad, Vector2, Vector3, Vector4};
@@ -350,6 +352,8 @@ fn main() {
         let t1_wnd = Tri3(t1_wnd[0], t1_wnd[1], t1_wnd[2]);
 
         rasterize_window_space(t1_wnd, |(x, y), (w0, w1, w2)| {
+            let mut vm = shadelang_vm.clone();
+
             let i = im_dims.0 * y + x;
 
             let interpolate_inverse = |(a, b, c), (w0, w1, w2)| {
@@ -369,11 +373,29 @@ fn main() {
                 // shadelang_vm.set_in_float("ny", n.y);
                 // shadelang_vm.set_in_float("nz", n.z);
 
-                shadelang_vm.set_global("normal", [n.x, n.y, n.z]);
+                vm.set_global("normal", [n.x, n.y, n.z]);
 
-                shadelang_vm.run_fn("main");
+                let result = vm.run_fn("main", vec![]);
 
-                let color: [f32; 3] = unsafe { shadelang_vm.pop_stack() };
+                let mut vm = match result {
+                    VMState::BreakpointEncountered(s) => {
+                        dbg!(s.breakpoint());
+                        let stack = s.generate_stack_view();
+                        dbg!(stack.current_fn);
+                        stack.symbols.iter().for_each(|(id, (tk, bytes))| {
+                            println!("{} [{:?}]: {}", id, tk, match tk {
+                                motokigo::ast::TypeKind::F32 => format!("{}", bytemuck::from_bytes::<f32>(&bytes)),
+                                motokigo::ast::TypeKind::Vec3 => format!("{:?}", bytemuck::from_bytes::<motokigo::builtins::Vec3>(&bytes)),
+                                _ => panic!()
+                            });
+                        });
+                        std::process::exit(0);
+                        s.resume().unwrap_vm()
+                    }
+                    VMState::VMRunFinished(s) => s.reset(),
+                };
+
+                let color: [f32; 3] = unsafe { vm.pop_stack() };
                 // let cr = shadelang_vm.get_out_float("cr");
                 // let cg = shadelang_vm.get_out_float("cg");
                 // let cb = shadelang_vm.get_out_float("cb");
