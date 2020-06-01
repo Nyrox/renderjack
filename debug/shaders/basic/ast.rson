@@ -318,6 +318,23 @@ Program {
                     ),
                 ),
             ],
+            ret_type: Spanned {
+                item: TypeRef(
+                    "Vec3",
+                ),
+                from: Position {
+                    line: 4,
+                    offset: Some(
+                        0,
+                    ),
+                },
+                to: Position {
+                    line: 4,
+                    offset: Some(
+                        4,
+                    ),
+                },
+            },
         },
     ],
     in_parameters: [

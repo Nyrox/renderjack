@@ -181,17 +181,17 @@ VMProgram {
                         ),
                         is_static: false,
                     },
-                    "ambient": SymbolMeta {
-                        type_kind: F32,
-                        stack_offset: Some(
-                            28,
-                        ),
-                        is_static: false,
-                    },
                     "cos_a": SymbolMeta {
                         type_kind: F32,
                         stack_offset: Some(
                             24,
+                        ),
+                        is_static: false,
+                    },
+                    "ambient": SymbolMeta {
+                        type_kind: F32,
+                        stack_offset: Some(
+                            28,
                         ),
                         is_static: false,
                     },

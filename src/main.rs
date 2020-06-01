@@ -291,9 +291,19 @@ fn main() {
 
         let program = parser::parse(&src);
         std::fs::write("debug/shaders/basic/ast.rson", format!("{:#?}", program)).ok();
-        let program = compiler::compile(program);
-        std::fs::write("debug/shaders/basic/code.ron", format!("{:#?}", program)).ok();
-        program
+        {
+            let mut program = program.clone();
+            motokigo::compiler::resolve_types::resolve(
+                &mut program,
+                &mut motokigo::compiler::program_data::ProgramData::new(),
+            )
+            .unwrap();
+            let glsl = motokigo::glsl::generate_glsl(program.clone());
+            std::fs::write("debug/shaders/basic/compiled.glsl", glsl).ok();
+        }
+        let compiled = compiler::compile(program);
+        std::fs::write("debug/shaders/basic/code.ron", format!("{:#?}", compiled)).ok();
+        compiled
     };
     let mut shadelang_vm = vm::VirtualMachine::new(&shadelang_shader);
 
@@ -383,11 +393,20 @@ fn main() {
                         let stack = s.generate_stack_view();
                         dbg!(stack.current_fn);
                         stack.symbols.iter().for_each(|(id, (tk, bytes))| {
-                            println!("{} [{:?}]: {}", id, tk, match tk {
-                                motokigo::ast::TypeKind::F32 => format!("{}", bytemuck::from_bytes::<f32>(&bytes)),
-                                motokigo::ast::TypeKind::Vec3 => format!("{:?}", bytemuck::from_bytes::<motokigo::builtins::Vec3>(&bytes)),
-                                _ => panic!()
-                            });
+                            println!(
+                                "{} [{:?}]: {}",
+                                id,
+                                tk,
+                                match tk {
+                                    motokigo::ast::TypeKind::F32 =>
+                                        format!("{}", bytemuck::from_bytes::<f32>(&bytes)),
+                                    motokigo::ast::TypeKind::Vec3 => format!(
+                                        "{:?}",
+                                        bytemuck::from_bytes::<motokigo::builtins::Vec3>(&bytes)
+                                    ),
+                                    _ => panic!(),
+                                }
+                            );
                         });
                         std::process::exit(0);
                         s.resume().unwrap_vm()
