@@ -1,5 +1,5 @@
 [package]
-name = "shader-thing"
+name = "renderjack"
 version = "0.1.0"
 authors = ["Nyrox <root@nyrox.tech>"]
 edition = "2018"
@@ -19,3 +19,4 @@ motokigo={ path="./motokigo" }
 
 [workspace]
 exclude=["motokigo"]
+members=["wasm"]
