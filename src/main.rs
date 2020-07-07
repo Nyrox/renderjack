@@ -400,10 +400,7 @@ fn main() {
                                 match tk {
                                     motokigo::ast::TypeKind::F32 =>
                                         format!("{}", bytemuck::from_bytes::<f32>(&bytes)),
-                                    motokigo::ast::TypeKind::Vec3 => format!(
-                                        "{:?}",
-                                        bytemuck::from_bytes::<motokigo::builtins::Vec3>(&bytes)
-                                    ),
+                                    motokigo::ast::TypeKind::Vector(_, _) => panic!(),
                                     _ => panic!(),
                                 }
                             );
