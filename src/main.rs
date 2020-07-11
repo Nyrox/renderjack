@@ -4,12 +4,15 @@
 pub mod camera;
 pub mod mesh;
 pub mod opengl;
-pub mod shadelang;
 pub mod shader;
 pub mod transform;
 
+use motokigo::{
+    compiler, parser,
+    vm::{self, *},
+};
+
 use camera::Camera;
-use cgmath::prelude::*;
 use cgmath::{Deg, Matrix4, PerspectiveFov, Rad, Vector2, Vector3, Vector4};
 use transform::Transform;
 
@@ -286,13 +289,23 @@ fn main() {
         let src = read_file_contents("res/shaders/shadelang/basic.sl");
         std::fs::create_dir_all("debug/shaders/basic/").ok();
 
-        let program = shadelang::parser::parse(&src);
+        let program = parser::parse(&src);
         std::fs::write("debug/shaders/basic/ast.rson", format!("{:#?}", program)).ok();
-        let program = shadelang::compiler::compile(program);
-        std::fs::write("debug/shaders/basic/code.ron", format!("{:#?}", program)).ok();
-        program
+        {
+            let mut program = program.clone();
+            motokigo::compiler::resolve_types::resolve(
+                &mut program,
+                &mut motokigo::compiler::program_data::ProgramData::new(),
+            )
+            .unwrap();
+            let glsl = motokigo::glsl::generate_glsl(program.clone());
+            std::fs::write("debug/shaders/basic/compiled.glsl", glsl).ok();
+        }
+        let compiled = compiler::compile(program);
+        std::fs::write("debug/shaders/basic/code.ron", format!("{:#?}", compiled)).ok();
+        compiled
     };
-    let mut shadelang_vm = shadelang::vm::VirtualMachine::new(&shadelang_shader);
+    let mut shadelang_vm = vm::VirtualMachine::new(&shadelang_shader);
 
     let viewport = Viewport {
         x: 0,
@@ -349,6 +362,8 @@ fn main() {
         let t1_wnd = Tri3(t1_wnd[0], t1_wnd[1], t1_wnd[2]);
 
         rasterize_window_space(t1_wnd, |(x, y), (w0, w1, w2)| {
+            let mut vm = shadelang_vm.clone();
+
             let i = im_dims.0 * y + x;
 
             let interpolate_inverse = |(a, b, c), (w0, w1, w2)| {
@@ -368,12 +383,35 @@ fn main() {
                 // shadelang_vm.set_in_float("ny", n.y);
                 // shadelang_vm.set_in_float("nz", n.z);
 
-                shadelang_vm.set_global("normal", [n.x, n.y, n.z]);
+                vm.set_global("normal", [n.x, n.y, n.z]);
 
-                shadelang_vm.run_fn("main");
+                let result = vm.run_fn("main", vec![]);
 
-                let color: [f32; 3] = shadelang_vm.get_global("normal");
-                let color: [f32; 3] = unsafe { shadelang_vm.pop_stack() };
+                let mut vm = match result {
+                    VMState::BreakpointEncountered(s) => {
+                        dbg!(s.breakpoint());
+                        let stack = s.generate_stack_view();
+                        dbg!(stack.current_fn);
+                        stack.symbols.iter().for_each(|(id, (tk, bytes))| {
+                            println!(
+                                "{} [{:?}]: {}",
+                                id,
+                                tk,
+                                match tk {
+                                    motokigo::ast::TypeKind::F32 =>
+                                        format!("{}", bytemuck::from_bytes::<f32>(&bytes)),
+                                    motokigo::ast::TypeKind::Vector(_, _) => panic!(),
+                                    _ => panic!(),
+                                }
+                            );
+                        });
+                        std::process::exit(0);
+                        s.resume().unwrap_vm()
+                    }
+                    VMState::VMRunFinished(s) => s.reset(),
+                };
+
+                let color: [f32; 3] = unsafe { vm.pop_stack() };
                 // let cr = shadelang_vm.get_out_float("cr");
                 // let cg = shadelang_vm.get_out_float("cg");
                 // let cb = shadelang_vm.get_out_float("cb");

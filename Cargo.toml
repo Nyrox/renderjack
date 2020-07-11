@@ -15,10 +15,7 @@ cgmath="0.17"
 glutin="0.24"
 gl="0.14"
 bytemuck="1.2"
-builtins={ path="./builtins/" }
+motokigo={ path="./motokigo" }
 
 [workspace]
-members=[
-    "builtins",
-    "macros"
-]
+exclude=["motokigo"]

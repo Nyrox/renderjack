@@ -6,11 +6,7 @@ Vec3 main() {
     C = Vec3(1.0, 0.5, 0.5)
     
     cos_a = dot(L, normal)
+    ambient = 0.3
 
-    // call float
-    cos_b = foo(cos_a)
-    // call vec
-    D = foo(C)
-
-    return cos_a * C
+    return cos_a * C + ambient * C
 }

@@ -1,5 +1,3 @@
-#version 330 core
-
 in vec3 normal;
 out vec3 out_0;
 
@@ -15,5 +13,4 @@ void main() {
 	vec3 rt = __impl_main();
 	out_0 = rt;
 }
-
 
