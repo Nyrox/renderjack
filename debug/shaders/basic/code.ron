@@ -6,18 +6,6 @@ VMProgram {
         ),
         MemoryCell(
             ConstF32,
-            16128,
-        ),
-        MemoryCell(
-            CallBuiltIn,
-            6,
-        ),
-        MemoryCell(
-            ConstF32,
-            0,
-        ),
-        MemoryCell(
-            ConstF32,
             16256,
         ),
         MemoryCell(
@@ -30,15 +18,7 @@ VMProgram {
         ),
         MemoryCell(
             CallBuiltIn,
-            6,
-        ),
-        MemoryCell(
-            CallBuiltIn,
-            3,
-        ),
-        MemoryCell(
-            CallBuiltIn,
-            4,
+            21,
         ),
         MemoryCell(
             StmtMarker,
@@ -50,6 +30,14 @@ VMProgram {
         ),
         MemoryCell(
             ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
             16256,
         ),
         MemoryCell(
@@ -58,55 +46,31 @@ VMProgram {
         ),
         MemoryCell(
             ConstF32,
-            16128,
-        ),
-        MemoryCell(
-            ConstF32,
-            0,
-        ),
-        MemoryCell(
-            ConstF32,
-            16128,
+            16448,
         ),
         MemoryCell(
             CallBuiltIn,
-            3,
+            22,
         ),
         MemoryCell(
             StmtMarker,
             6,
         ),
         MemoryCell(
-            Load4,
+            ConstF32,
             0,
         ),
         MemoryCell(
-            Load4,
-            4,
+            ConstF32,
+            16256,
         ),
         MemoryCell(
-            Load4,
-            8,
-        ),
-        MemoryCell(
-            Load4Global,
+            ConstF32,
             0,
         ),
         MemoryCell(
-            Load4Global,
-            4,
-        ),
-        MemoryCell(
-            Load4Global,
-            8,
-        ),
-        MemoryCell(
-            CallBuiltIn,
-            5,
-        ),
-        MemoryCell(
-            StmtMarker,
-            8,
+            ConstF32,
+            16512,
         ),
         MemoryCell(
             ConstF32,
@@ -114,8 +78,77 @@ VMProgram {
         ),
         MemoryCell,
         MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell,
+        MemoryCell(
+            CallBuiltIn,
+            23,
+        ),
+        MemoryCell(
+            StmtMarker,
+            7,
+        ),
+        MemoryCell(
+            Load4,
+            0,
+        ),
+        MemoryCell(
+            Load4,
+            4,
+        ),
+        MemoryCell(
+            Load4,
+            0,
+        ),
+        MemoryCell(
+            Load4,
+            4,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            17,
+        ),
+        MemoryCell(
             StmtMarker,
             9,
+        ),
+        MemoryCell(
+            Load4,
+            8,
+        ),
+        MemoryCell(
+            Load4,
+            12,
+        ),
+        MemoryCell(
+            Load4,
+            16,
+        ),
+        MemoryCell(
+            Load4,
+            8,
+        ),
+        MemoryCell(
+            Load4,
+            12,
+        ),
+        MemoryCell(
+            Load4,
+            16,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            11,
+        ),
+        MemoryCell(
+            StmtMarker,
+            10,
+        ),
+        MemoryCell(
+            Load4,
+            20,
         ),
         MemoryCell(
             Load4,
@@ -123,39 +156,19 @@ VMProgram {
         ),
         MemoryCell(
             Load4,
-            12,
-        ),
-        MemoryCell(
-            Load4,
-            16,
-        ),
-        MemoryCell(
-            Load4,
-            20,
-        ),
-        MemoryCell(
-            CallBuiltIn,
-            0,
-        ),
-        MemoryCell(
-            Load4,
             28,
         ),
         MemoryCell(
             Load4,
-            12,
+            32,
         ),
         MemoryCell(
-            Load4,
-            16,
-        ),
-        MemoryCell(
-            Load4,
-            20,
-        ),
-        MemoryCell(
-            CallBuiltIn,
+            ConstF32,
             0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16384,
         ),
         MemoryCell(
             CallBuiltIn,
@@ -166,39 +179,681 @@ VMProgram {
             11,
         ),
         MemoryCell(
-            Ret,
+            Load4,
+            20,
+        ),
+        MemoryCell(
+            Load4,
+            24,
+        ),
+        MemoryCell(
+            Load4,
+            28,
+        ),
+        MemoryCell(
+            Load4,
             32,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16448,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            0,
+        ),
+        MemoryCell(
+            StmtMarker,
+            12,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            24,
+        ),
+        MemoryCell(
+            StmtMarker,
+            14,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            21,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            21,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            25,
+        ),
+        MemoryCell(
+            StmtMarker,
+            18,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            32,
+        ),
+        MemoryCell(
+            StmtMarker,
+            22,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            22,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            22,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            22,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            33,
+        ),
+        MemoryCell(
+            StmtMarker,
+            27,
+        ),
+        MemoryCell(
+            Load4,
+            0,
+        ),
+        MemoryCell(
+            Load4,
+            4,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            19,
+        ),
+        MemoryCell(
+            StmtMarker,
+            33,
+        ),
+        MemoryCell(
+            Load4,
+            8,
+        ),
+        MemoryCell(
+            Load4,
+            12,
+        ),
+        MemoryCell(
+            Load4,
+            16,
+        ),
+        MemoryCell(
+            Load4,
+            8,
+        ),
+        MemoryCell(
+            Load4,
+            12,
+        ),
+        MemoryCell(
+            Load4,
+            16,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            13,
+        ),
+        MemoryCell(
+            StmtMarker,
+            34,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16128,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            42,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            42,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            22,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            12,
+        ),
+        MemoryCell(
+            StmtMarker,
+            36,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16256,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16128,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell(
+            ConstF32,
+            16128,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            22,
+        ),
+        MemoryCell(
+            StmtMarker,
+            37,
+        ),
+        MemoryCell(
+            Load4,
+            204,
+        ),
+        MemoryCell(
+            Load4,
+            208,
+        ),
+        MemoryCell(
+            Load4,
+            212,
+        ),
+        MemoryCell(
+            Load4Global,
+            0,
+        ),
+        MemoryCell(
+            Load4Global,
+            4,
+        ),
+        MemoryCell(
+            Load4Global,
+            8,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            13,
+        ),
+        MemoryCell(
+            StmtMarker,
+            39,
+        ),
+        MemoryCell(
+            ConstF32,
+            0,
+        ),
+        MemoryCell,
+        MemoryCell(
+            StmtMarker,
+            40,
+        ),
+        MemoryCell(
+            Load4,
+            228,
+        ),
+        MemoryCell(
+            Load4,
+            216,
+        ),
+        MemoryCell(
+            Load4,
+            220,
+        ),
+        MemoryCell(
+            Load4,
+            224,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            8,
+        ),
+        MemoryCell(
+            Load4,
+            232,
+        ),
+        MemoryCell(
+            Load4,
+            216,
+        ),
+        MemoryCell(
+            Load4,
+            220,
+        ),
+        MemoryCell(
+            Load4,
+            224,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            8,
+        ),
+        MemoryCell(
+            CallBuiltIn,
+            10,
+        ),
+        MemoryCell(
+            StmtMarker,
+            42,
+        ),
+        MemoryCell(
+            Ret,
+            236,
         ),
     ],
     data: ProgramData {
         functions: {
             "main": FuncMeta {
                 symbols: {
-                    "C": SymbolMeta {
-                        type_kind: Vec3,
+                    "VecDivTest": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            4,
+                        ),
                         stack_offset: Some(
-                            12,
+                            56,
                         ),
                         is_static: false,
                     },
-                    "cos_a": SymbolMeta {
-                        type_kind: F32,
+                    "VecAddTest": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            2,
+                        ),
                         stack_offset: Some(
-                            24,
+                            36,
+                        ),
+                        is_static: false,
+                    },
+                    "Mat3Test": SymbolMeta {
+                        type_kind: Matrix(
+                            F32,
+                            3,
+                            3,
+                        ),
+                        stack_offset: Some(
+                            120,
+                        ),
+                        is_static: false,
+                    },
+                    "C": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            3,
+                        ),
+                        stack_offset: Some(
+                            216,
                         ),
                         is_static: false,
                     },
                     "ambient": SymbolMeta {
                         type_kind: F32,
                         stack_offset: Some(
-                            28,
+                            232,
+                        ),
+                        is_static: false,
+                    },
+                    "Mat2VecTest": SymbolMeta {
+                        type_kind: Matrix(
+                            F32,
+                            2,
+                            2,
+                        ),
+                        stack_offset: Some(
+                            104,
                         ),
                         is_static: false,
                     },
                     "L": SymbolMeta {
-                        type_kind: Vec3,
+                        type_kind: Vector(
+                            F32,
+                            3,
+                        ),
+                        stack_offset: Some(
+                            204,
+                        ),
+                        is_static: false,
+                    },
+                    "VecMulTest": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            4,
+                        ),
+                        stack_offset: Some(
+                            72,
+                        ),
+                        is_static: false,
+                    },
+                    "VecSubTest": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            3,
+                        ),
+                        stack_offset: Some(
+                            44,
+                        ),
+                        is_static: false,
+                    },
+                    "DotTest": SymbolMeta {
+                        type_kind: F32,
+                        stack_offset: Some(
+                            200,
+                        ),
+                        is_static: false,
+                    },
+                    "Mat3VecTest": SymbolMeta {
+                        type_kind: Matrix(
+                            F32,
+                            3,
+                            3,
+                        ),
+                        stack_offset: Some(
+                            156,
+                        ),
+                        is_static: false,
+                    },
+                    "Vec3Test": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            3,
+                        ),
+                        stack_offset: Some(
+                            8,
+                        ),
+                        is_static: false,
+                    },
+                    "cos_a": SymbolMeta {
+                        type_kind: F32,
+                        stack_offset: Some(
+                            228,
+                        ),
+                        is_static: false,
+                    },
+                    "Vec4Test": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            4,
+                        ),
+                        stack_offset: Some(
+                            20,
+                        ),
+                        is_static: false,
+                    },
+                    "Vec2Test": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            2,
+                        ),
                         stack_offset: Some(
                             0,
+                        ),
+                        is_static: false,
+                    },
+                    "Mat2Test": SymbolMeta {
+                        type_kind: Matrix(
+                            F32,
+                            2,
+                            2,
+                        ),
+                        stack_offset: Some(
+                            88,
+                        ),
+                        is_static: false,
+                    },
+                    "NormalizeTest": SymbolMeta {
+                        type_kind: Vector(
+                            F32,
+                            2,
+                        ),
+                        stack_offset: Some(
+                            192,
                         ),
                         is_static: false,
                     },
@@ -210,7 +865,10 @@ VMProgram {
         },
         global_symbols: {
             "normal": SymbolMeta {
-                type_kind: Vec3,
+                type_kind: Vector(
+                    F32,
+                    3,
+                ),
                 stack_offset: Some(
                     0,
                 ),
